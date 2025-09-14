@@ -19,7 +19,11 @@ const corsOptions = {
     const allowedOrigins =
       process.env.NODE_ENV === 'production'
         ? [process.env.CLIENT_URL].filter(Boolean)
-        : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+        : [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'https://soul-winning-backend.vercel.app/',
+          ];
 
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
@@ -34,7 +38,12 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-request-id'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'x-request-id',
+  ],
   optionsSuccessStatus: 200,
 };
 
