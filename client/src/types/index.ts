@@ -12,6 +12,8 @@ export interface Contact {
   address?: string;
   phone?: string;
   tags: string[];
+  sharedToPrayerList?: boolean;
+  prayerRequest?: string;
   userId: string;
   createdAt: string;
   updatedAt: string;

@@ -130,7 +130,7 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     }
   };
 
-  const fetchContactNotes = async (contactId: string) => {
+  const fetchContactNotes = useCallback(async (contactId: string) => {
     try {
       clearError();
       const response = await noteService.getNotes(contactId);
@@ -140,7 +140,7 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     } catch (err) {
       handleError(err, 'Failed to fetch notes');
     }
-  };
+  }, []);
 
   const addNote = async (contactId: string, content: string) => {
     try {

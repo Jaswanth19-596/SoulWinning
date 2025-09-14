@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 221 83% 53%;
+    --radius: 1rem;
+    --gradient-from: 221 83% 53%;
+    --gradient-via: 262 83% 58%;
+    --gradient-to: 270 91% 65%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 222.2 84% 4.9%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --gradient-from: 217 91% 60%;
+    --gradient-via: 221 83% 53%;
+    --gradient-to: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .fade-in {
+    @apply opacity-0 animate-in;
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .slide-in-from-bottom {
+    @apply translate-y-4 animate-in;
+    animation: slide-in-bottom 0.3s ease-out forwards;
+  }
+
+  .slide-in-from-top {
+    @apply -translate-y-4 animate-in;
+    animation: slide-in-top 0.3s ease-out forwards;
+  }
+
+  .slide-in-from-left {
+    @apply -translate-x-4 animate-in;
+    animation: slide-in-left 0.3s ease-out forwards;
+  }
+
+  .slide-in-from-right {
+    @apply translate-x-4 animate-in;
+    animation: slide-in-right 0.3s ease-out forwards;
+  }
+
+  /* Premium Glassmorphism Effects */
+  .glass {
+    @apply bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl shadow-black/5 dark:shadow-white/5;
+  }
+
+  .glass-card {
+    @apply bg-white/60 dark:bg-white/[0.03] backdrop-blur-2xl border border-white/30 dark:border-white/[0.08] shadow-2xl shadow-black/10 dark:shadow-white/[0.02];
+  }
+
+  .glass-subtle {
+    @apply bg-white/40 dark:bg-white/[0.02] backdrop-blur-lg border border-white/20 dark:border-white/[0.05] shadow-lg shadow-black/5 dark:shadow-white/[0.02];
+  }
+
+  /* Modern Gradient Backgrounds */
+  .gradient-bg {
+    @apply bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-100/50 dark:from-slate-950 dark:via-blue-950/50 dark:to-indigo-950/30;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600;
+  }
+
+  .gradient-subtle {
+    @apply bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900;
+  }
+
+  /* Modern Button Effects */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+
+  .btn-glass {
+    @apply glass hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300;
+  }
+
+  /* Shimmer Effect for Buttons */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::before {
+    @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent;
+    content: '';
+    animation: shimmer 2s infinite;
+  }
+
+  /* Modern Card Hover Effects */
+  .card-hover {
+    @apply transition-all duration-500 ease-out hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20 dark:hover:shadow-blue-400/10;
+  }
+
+  /* Floating Animation */
+  .float {
+    @apply animate-float;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Focus visible styles */
+.focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Remove default form styling */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  @apply outline-none;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}

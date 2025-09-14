@@ -22,6 +22,15 @@ const contactSchema = new mongoose.Schema({
     trim: true,
     maxlength: [30, 'Tag cannot exceed 30 characters']
   }],
+  sharedToPrayerList: {
+    type: Boolean,
+    default: false
+  },
+  prayerRequest: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Prayer request cannot exceed 500 characters']
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -34,5 +43,6 @@ const contactSchema = new mongoose.Schema({
 contactSchema.index({ userId: 1, name: 1 });
 contactSchema.index({ userId: 1, tags: 1 });
 contactSchema.index({ userId: 1, createdAt: -1 });
+contactSchema.index({ sharedToPrayerList: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Contact', contactSchema);

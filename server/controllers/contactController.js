@@ -90,13 +90,15 @@ const createContact = async (req, res) => {
       });
     }
 
-    const { name, address, phone, tags } = req.body;
+    const { name, address, phone, tags, sharedToPrayerList, prayerRequest } = req.body;
 
     const contact = await Contact.create({
       name,
       address,
       phone,
       tags,
+      sharedToPrayerList: sharedToPrayerList || false,
+      prayerRequest,
       userId: req.user._id
     });
 
@@ -125,7 +127,7 @@ const updateContact = async (req, res) => {
       });
     }
 
-    const { name, address, phone, tags } = req.body;
+    const { name, address, phone, tags, sharedToPrayerList, prayerRequest } = req.body;
 
     const contact = await Contact.findOneAndUpdate(
       {
@@ -136,7 +138,9 @@ const updateContact = async (req, res) => {
         name,
         address,
         phone,
-        tags
+        tags,
+        sharedToPrayerList,
+        prayerRequest
       },
       { new: true, runValidators: true }
     );
@@ -202,15 +206,11 @@ const searchContacts = async (req, res) => {
       });
     }
 
-    console.log(`🔍 Searching for: "${q}"`);
-
     // Search in notes content
     const contactIds = await Note.find({
       userId: req.user._id,
       content: { $regex: q, $options: 'i' }
     }).distinct('contactId');
-
-    console.log(`📝 Found ${contactIds.length} contacts with matching notes`);
 
     // Enhanced search: name, address, phone, tags, and notes
     const contacts = await Contact.find({
@@ -223,8 +223,6 @@ const searchContacts = async (req, res) => {
         { _id: { $in: contactIds } } // Match notes content
       ]
     }).sort({ createdAt: -1 });
-
-    console.log(`📊 Total contacts found: ${contacts.length}`);
 
     res.json({
       success: true,
