@@ -18,12 +18,13 @@ const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins =
       process.env.NODE_ENV === 'production'
-        ? [process.env.CLIENT_URL].filter(Boolean)
+        ? [process.env.CLIENT_URL, 'https://soul-winning-backend.vercel.app'].filter(Boolean)
         : [
             'http://localhost:3000',
             'http://127.0.0.1:3000',
-            'https://soul-winning-backend.vercel.app/',
-          ];
+            'https://soul-winning-backend.vercel.app',
+            process.env.CLIENT_URL
+          ].filter(Boolean);
 
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
@@ -33,7 +34,14 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Temporary: Allow Vercel deployments for testing
+      if (origin && origin.includes('vercel.app')) {
+        console.log(`⚠️ Temporary CORS allow for: ${origin}`);
+        callback(null, true);
+      } else {
+        console.log(`❌ CORS blocked: ${origin}. Allowed: ${allowedOrigins.join(', ')}`);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
