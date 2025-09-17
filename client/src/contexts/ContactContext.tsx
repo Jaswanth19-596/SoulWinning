@@ -151,11 +151,18 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
   const fetchContactNotes = useCallback(async (contactId: string) => {
     try {
       clearError();
+      console.log('ContactContext: Fetching notes for contactId:', contactId);
       const response = await noteService.getNotes(contactId);
+      console.log('ContactContext: Notes API response:', response);
       if (response.success && response.data) {
+        console.log('ContactContext: Setting notes:', response.data);
         setContactNotes(response.data);
+      } else {
+        console.log('ContactContext: No notes data in response');
+        setContactNotes([]);
       }
     } catch (err) {
+      console.error('ContactContext: Error fetching notes:', err);
       handleError(err, 'Failed to fetch notes');
     }
   }, []);

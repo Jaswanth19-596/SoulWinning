@@ -5,6 +5,7 @@ const Contact = require('../models/Contact');
 const getNotes = async (req, res) => {
   try {
     const { contactId } = req.params;
+    console.log('getNotes: Fetching notes for contactId:', contactId, 'userId:', req.user._id);
 
     const contact = await Contact.findOne({
       _id: contactId,
@@ -12,6 +13,7 @@ const getNotes = async (req, res) => {
     });
 
     if (!contact) {
+      console.log('getNotes: Contact not found for contactId:', contactId, 'userId:', req.user._id);
       return res.status(404).json({
         success: false,
         message: 'Contact not found'
@@ -24,8 +26,11 @@ const getNotes = async (req, res) => {
     })
       .sort({ timestamp: -1 });
 
+    console.log('getNotes: Found', notes.length, 'notes for contactId:', contactId);
+
     // Decrypt notes before sending response
     const decryptedNotes = notes.map(note => note.toDecryptedJSON());
+    console.log('getNotes: Decrypted notes:', decryptedNotes);
 
     res.json({
       success: true,

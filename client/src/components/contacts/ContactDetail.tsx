@@ -39,7 +39,8 @@ const ContactDetail: React.FC = () => {
   }, [id, contacts]);
 
   useEffect(() => {
-    if (id && contact) {
+    if (id) {
+      console.log('Fetching notes for contact ID:', id);
       fetchContactNotes(id);
     }
   }, [id, fetchContactNotes]);
