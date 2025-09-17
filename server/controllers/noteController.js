@@ -18,7 +18,10 @@ const getNotes = async (req, res) => {
       });
     }
 
-    const notes = await Note.find({ contactId })
+    const notes = await Note.find({
+      contactId,
+      userId: req.user._id
+    })
       .sort({ timestamp: -1 });
 
     // Decrypt notes before sending response

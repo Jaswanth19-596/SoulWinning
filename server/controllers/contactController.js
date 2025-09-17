@@ -64,7 +64,10 @@ const getContact = async (req, res) => {
       });
     }
 
-    const notes = await Note.find({ contactId: contact._id })
+    const notes = await Note.find({
+      contactId: contact._id,
+      userId: req.user._id
+    })
       .sort({ timestamp: -1 });
 
     // Decrypt contact and notes before sending response
@@ -194,7 +197,10 @@ const deleteContact = async (req, res) => {
       });
     }
 
-    await Note.deleteMany({ contactId: req.params.id });
+    await Note.deleteMany({
+      contactId: req.params.id,
+      userId: req.user._id
+    });
 
     res.json({
       success: true,
