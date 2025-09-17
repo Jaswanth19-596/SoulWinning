@@ -1,7 +1,7 @@
-# MongoDB Local Setup Guide
+# MongoDB Setup Guide for Soul Winning App
 
 ## 🎉 Current Status: READY TO GO!
-Your MongoDB is already properly installed and running! Here's everything you need to know.
+Your MongoDB is already properly installed and running with enterprise-grade encryption support! Here's everything you need to know.
 
 ## 📊 Your MongoDB Setup
 
@@ -12,12 +12,14 @@ Your MongoDB is already properly installed and running! Here's everything you ne
 - **Database Location**: `/opt/homebrew/var/mongodb`
 - **Log Files**: `/opt/homebrew/var/log/mongodb`
 - **Configuration**: `/opt/homebrew/etc/mongod.conf`
+- **Encryption**: ✅ AES-256-CBC field-level encryption enabled
 
 ### Connection Details
 - **Host**: `localhost`
 - **Port**: `27017` (default)
 - **Database Name**: `soul-winning`
 - **Full URI**: `mongodb://localhost:27017/soul-winning`
+- **Encryption Key**: Environment variable `DB_ENCRYPTION_KEY` (32-byte base64)
 
 ## 🚀 Managing MongoDB Service
 
@@ -92,17 +94,17 @@ db.contacts.find({userId: ObjectId("your-user-id")})
 exit
 ```
 
-## 🗂️ Understanding Your Data Structure
+## 🗂️ Understanding Your Encrypted Data Structure
 
-When you use the Soul Winning app, MongoDB will automatically create these collections:
+When you use the Soul Winning app, MongoDB will automatically create these collections with AES-256-CBC encryption:
 
 ### `users` Collection
 ```javascript
 {
   _id: ObjectId("..."),
-  username: "john_doe",
-  email: "john@example.com",
-  password: "hashed_password",
+  username: "john_doe", // Unencrypted for login
+  email: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  password: "$2b$10$...", // bcrypt hashed
   createdAt: ISODate("..."),
   updatedAt: ISODate("...")
 }
@@ -112,11 +114,13 @@ When you use the Soul Winning app, MongoDB will automatically create these colle
 ```javascript
 {
   _id: ObjectId("..."),
-  name: "Jane Smith",
-  address: "123 Main St, City",
-  phone: "555-0123",
-  tags: ["Interested", "Follow-up needed"],
-  userId: ObjectId("..."), // Links to users collection
+  name: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  address: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  phone: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  tags: ["aGVsbG93b3JsZA=="], // Each tag AES-256-CBC encrypted
+  prayerRequest: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  sharedToPrayerList: false, // Unencrypted for querying
+  userId: ObjectId("..."), // Unencrypted for relationships
   createdAt: ISODate("..."),
   updatedAt: ISODate("...")
 }
@@ -126,10 +130,23 @@ When you use the Soul Winning app, MongoDB will automatically create these colle
 ```javascript
 {
   _id: ObjectId("..."),
-  content: "Had a great conversation about faith...",
-  contactId: ObjectId("..."), // Links to contacts collection
-  userId: ObjectId("..."), // Links to users collection
+  content: "aGVsbG93b3JsZA==", // AES-256-CBC encrypted
+  contactId: ObjectId("..."), // Unencrypted for relationships
+  userId: ObjectId("..."), // Unencrypted for relationships
   timestamp: ISODate("..."),
+  createdAt: ISODate("..."),
+  updatedAt: ISODate("...")
+}
+```
+
+### `prayercomments` Collection
+```javascript
+{
+  _id: ObjectId("..."),
+  content: "Praying for you!", // Prayer comment text
+  contactId: ObjectId("..."), // Reference to contact
+  userId: ObjectId("..."), // Reference to user
+  reaction: "praying", // 'praying', 'amen', 'heart'
   createdAt: ISODate("..."),
   updatedAt: ISODate("...")
 }
@@ -194,15 +211,18 @@ kill -9 PID
 brew services start mongodb-community
 ```
 
-## 💾 Backup and Restore
+## 💾 Backup and Restore (Encrypted Data)
 
 ### Create a Backup
 ```bash
-# Backup entire soul-winning database
+# Backup entire soul-winning database (includes encrypted data)
 mongodump --db soul-winning --out ~/mongodb-backups/$(date +%Y-%m-%d)
 
 # Backup specific collection
 mongodump --db soul-winning --collection contacts --out ~/mongodb-backups/contacts-$(date +%Y-%m-%d)
+
+# ⚠️  Important: Backup your encryption key separately!
+echo $DB_ENCRYPTION_KEY > ~/mongodb-backups/$(date +%Y-%m-%d)/encryption-key.txt
 ```
 
 ### Restore from Backup
@@ -212,15 +232,51 @@ mongorestore --db soul-winning ~/mongodb-backups/2024-01-01/soul-winning
 
 # Restore specific collection
 mongorestore --db soul-winning --collection contacts ~/mongodb-backups/contacts-2024-01-01/soul-winning/contacts.bson
+
+# ⚠️  Important: Restore encryption key to environment
+export DB_ENCRYPTION_KEY=$(cat ~/mongodb-backups/2024-01-01/encryption-key.txt)
 ```
 
 ### Export Data to JSON
 ```bash
-# Export contacts to JSON
-mongoexport --db soul-winning --collection contacts --out ~/exports/contacts.json --pretty
+# ⚠️  Note: Exported data will be in encrypted format
+# For readable exports, use the application's export feature
 
-# Export with query filter
-mongoexport --db soul-winning --collection contacts --query '{"tags": "Interested"}' --out ~/exports/interested-contacts.json --pretty
+# Export encrypted contacts to JSON
+mongoexport --db soul-winning --collection contacts --out ~/exports/contacts-encrypted.json --pretty
+
+# Export with query filter (encrypted data)
+mongoexport --db soul-winning --collection contacts --query '{"sharedToPrayerList": true}' --out ~/exports/prayer-contacts.json --pretty
+```
+
+## 🔐 Encryption Key Management
+
+### Generate New Encryption Key
+```bash
+# Navigate to server directory
+cd /Users/jaswanth/Desktop/Soul\ Winning/server
+
+# Generate new encryption key
+node scripts/generateEncryptionKey.js
+
+# Copy the generated key to your .env file
+echo "DB_ENCRYPTION_KEY=your-generated-key" >> .env
+```
+
+### Key Security Best Practices
+- **Never commit encryption keys to version control**
+- **Store keys securely in environment variables**
+- **Backup keys separately from database backups**
+- **Use different keys for development and production**
+- **Rotate keys periodically for enhanced security**
+
+### Legacy Data Migration
+The application automatically handles migration of unencrypted data:
+```javascript
+// Automatic detection in Mongoose middleware
+if (!dbEncryption.isEncryptedData(this.name)) {
+  this.name = dbEncryption.encrypt(this.name);
+}
 ```
 
 ## 🔧 Advanced Configuration
@@ -256,19 +312,38 @@ db.stats()
 db.contacts.stats()
 ```
 
-## 🛡️ Security Best Practices
+## 🛡️ Security Architecture
 
-### For Development (Current Setup)
-- ✅ MongoDB runs locally only (127.0.0.1)
-- ✅ Not accessible from outside your machine
-- ✅ No authentication required for local development
+### Current Security Features ✅
+- **Database Encryption**: AES-256-CBC encryption for all sensitive data
+- **Local Access Only**: MongoDB runs on 127.0.0.1 (localhost)
+- **Network Isolation**: Not accessible from outside your machine
+- **Field-Level Security**: Granular encryption of sensitive fields only
+- **Legacy Support**: Automatic migration of unencrypted existing data
+- **Key Management**: Environment-based encryption key storage
 
-### For Production (If deploying later)
-- Enable authentication
-- Create database users with specific permissions
-- Use SSL/TLS encryption
-- Configure firewall rules
-- Regular security updates
+### Encryption Implementation
+- **Algorithm**: AES-256-CBC with random initialization vectors
+- **Key Length**: 32 bytes (256 bits) base64-encoded
+- **IV Generation**: Crypto.randomBytes(16) for each encryption
+- **Data Format**: `base64(iv:encrypted_data)`
+- **Detection**: Automatic legacy data detection and migration
+
+### For Production Deployment
+- **MongoDB Atlas**: Use MongoDB Atlas with encryption at rest
+- **Authentication**: Enable MongoDB authentication with role-based access
+- **SSL/TLS**: Encrypt data in transit
+- **Network Security**: Configure VPC and firewall rules
+- **Key Rotation**: Implement regular encryption key rotation
+- **Monitoring**: Set up database monitoring and alerting
+- **Backup Encryption**: Ensure backups are also encrypted
+
+### Data Privacy Guarantees
+- **User Isolation**: Each user can only access their own data
+- **No Admin Access**: No system administrator access to user data
+- **Encrypted Storage**: Sensitive data encrypted before database storage
+- **Secure Search**: Server-side decryption for search functionality
+- **Privacy Controls**: Users control prayer wall sharing
 
 ## 📱 GUI Tools (Optional)
 
@@ -307,20 +382,62 @@ brew services list | grep mongodb
 tail -f /opt/homebrew/var/log/mongodb/mongo.log
 ```
 
-### In MongoDB Shell
+### In MongoDB Shell (Viewing Encrypted Data)
 ```javascript
 // Basic navigation
 use soul-winning
 show collections
+
+// View encrypted contacts (data will appear encrypted)
 db.contacts.find().limit(5)
 
 // Count records
 db.users.countDocuments()
 db.contacts.countDocuments()
 db.notes.countDocuments()
+db.prayercomments.countDocuments()
+
+// Check prayer wall sharing
+db.contacts.find({sharedToPrayerList: true})
+
+// View user with encrypted email
+db.users.findOne()
+
+// ⚠️  Note: Sensitive data appears encrypted in raw queries
+// Use the application interface to view decrypted data
 
 // Exit
 exit
+```
+
+## 🔍 Encryption Testing
+
+### Test Encryption on Server Startup
+The server automatically tests encryption on startup:
+```bash
+# Start server to see encryption test
+cd /Users/jaswanth/Desktop/Soul\ Winning/server
+npm start
+
+# Look for these log messages:
+# ✅ Database encryption test passed
+# 🔐 Encryption/decryption working correctly
+```
+
+### Manual Encryption Testing
+```javascript
+// In Node.js (server environment)
+const dbEncryption = require('./utils/dbEncryption');
+
+// Test encryption
+const testData = "Sensitive contact information";
+const encrypted = dbEncryption.encrypt(testData);
+const decrypted = dbEncryption.decrypt(encrypted);
+
+console.log('Original:', testData);
+console.log('Encrypted:', encrypted);
+console.log('Decrypted:', decrypted);
+console.log('Match:', testData === decrypted);
 ```
 
 ## 🆘 Need Help?

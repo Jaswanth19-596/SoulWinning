@@ -21,11 +21,13 @@ const register = async (req, res) => {
 
     const { username, email, password } = req.body;
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
+    // Check for existing username (unencrypted)
+    const existingUsername = await User.findOne({ username });
 
-    if (existingUser) {
+    // Check for existing email (encrypted)
+    const existingEmail = await User.findByEmail(email);
+
+    if (existingUsername || existingEmail) {
       return res.status(400).json({
         success: false,
         message: 'User already exists with this email or username'
@@ -68,20 +70,33 @@ const login = async (req, res) => {
 
     const { username, password } = req.body;
 
-    const user = await User.findOne({
-      $or: [{ email: username }, { username }]
-    });
+    console.log('Login attempt for:', username);
+
+    // Try to find user by username first (unencrypted)
+    let user = await User.findOne({ username });
+    console.log('Found by username:', !!user);
+
+    // If not found by username, try by email (encrypted)
+    if (!user) {
+      console.log('Trying to find by email...');
+      user = await User.findByEmail(username);
+      console.log('Found by email:', !!user);
+    }
 
     if (!user) {
+      console.log('User not found for:', username);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
 
+    console.log('Comparing password for user:', user.username);
     const isMatch = await user.comparePassword(password);
+    console.log('Password match:', isMatch);
 
     if (!isMatch) {
+      console.log('Password mismatch for user:', user.username);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'

@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, MapPin, Calendar, ChevronRight, User } from 'lucide-react';
 import { Contact } from '../../types';
@@ -15,12 +15,10 @@ interface ContactCardProps {
 }
 
 const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onContactUpdate }) => {
-  const [currentContact, setCurrentContact] = useState(contact);
-
   const handleContactUpdate = (updated: Contact) => {
-    setCurrentContact(updated);
     onContactUpdate?.(updated);
   };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -41,27 +39,27 @@ const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onCont
             <div className="flex items-center gap-3 flex-1">
               <Avatar className="w-16 h-16 ring-2 ring-white/30 dark:ring-white/20 group-hover:ring-blue-400/50 dark:group-hover:ring-blue-300/30 transition-all duration-500 shadow-xl hover:shadow-2xl">
                 <AvatarFallback className="bg-gradient-to-br from-gradient-from via-gradient-via to-gradient-to text-white font-bold text-xl shadow-2xl">
-                  {getInitials(currentContact.name)}
+                  {getInitials(contact.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-bold text-foreground text-lg truncate group-hover:text-primary transition-colors duration-300">
-                    {currentContact.name}
+                    {contact.name}
                   </h3>
-                  {currentContact.sharedToPrayerList && (
+                  {contact.sharedToPrayerList && (
                     <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 animate-pulse" title="Shared to Prayer List" />
                   )}
                 </div>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <Calendar className="w-3 h-3" />
-                  {formatDate(currentContact.createdAt)}
+                  {formatDate(contact.createdAt)}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <PrayerToggle
-                contact={currentContact}
+                contact={contact}
                 onToggle={handleContactUpdate}
               />
               <motion.div
@@ -80,10 +78,10 @@ const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onCont
           <div className="space-y-2 min-h-[72px] flex flex-col justify-start">
             {/* Phone - Line 1 */}
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 h-6">
-              {currentContact.phone ? (
+              {contact.phone ? (
                 <>
                   <Phone className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                  <span className="font-medium truncate">{currentContact.phone}</span>
+                  <span className="font-medium truncate">{contact.phone}</span>
                 </>
               ) : (
                 <div className="h-6" />
@@ -92,10 +90,10 @@ const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onCont
 
             {/* Address - Line 2 & 3 */}
             <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300 h-10">
-              {currentContact.address ? (
+              {contact.address ? (
                 <>
                   <MapPin className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <span className="line-clamp-2 text-sm leading-5">{currentContact.address}</span>
+                  <span className="line-clamp-2 text-sm leading-5">{contact.address}</span>
                 </>
               ) : (
                 <div className="h-10" />
@@ -105,9 +103,9 @@ const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onCont
 
           {/* Tags - Limited height */}
           <div className="flex-1">
-            {currentContact.tags.length > 0 && (
+            {contact.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 h-7 overflow-hidden">
-                {currentContact.tags.slice(0, 2).map((tag, index) => (
+                {contact.tags.slice(0, 2).map((tag: string, index: number) => (
                   <Badge
                     key={index}
                     variant="secondary"
@@ -116,12 +114,12 @@ const ContactCard: React.FC<ContactCardProps> = memo(({ contact, onClick, onCont
                     {tag.length > 10 ? `${tag.substring(0, 10)}...` : tag}
                   </Badge>
                 ))}
-                {currentContact.tags.length > 2 && (
+                {contact.tags.length > 2 && (
                   <Badge
                     variant="outline"
                     className="text-xs text-muted-foreground glass-subtle"
                   >
-                    +{currentContact.tags.length - 2}
+                    +{contact.tags.length - 2}
                   </Badge>
                 )}
               </div>

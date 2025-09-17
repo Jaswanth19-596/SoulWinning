@@ -16,6 +16,7 @@ const ContactList: React.FC = () => {
     loading,
     error,
     fetchContacts,
+    updateContactInState,
     clearError,
   } = useContacts();
 
@@ -61,11 +62,10 @@ const ContactList: React.FC = () => {
   }, [navigate]);
 
   const handleContactUpdate = useCallback((updatedContact: any) => {
-    // Update the contact in the context/state if needed
-    // The ContactCard component manages its own state, so this might not be necessary
-    // but it's here in case we need to sync with the global state
-    console.log('Contact updated:', updatedContact);
-  }, []);
+    // Update the contact in the global context state directly
+    // The API call was already made by the PrayerToggle component
+    updateContactInState(updatedContact);
+  }, [updateContactInState]);
 
   // Use a stable search handler with useRef to prevent SearchBar re-renders
   const searchHandlerRef = useRef<(query: string) => void>(() => {});

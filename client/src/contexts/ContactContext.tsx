@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 import { Contact, Note } from '../types';
 import { contactService, CreateContactData } from '../services/contactService';
 import { noteService } from '../services/noteService';
+import { debounce } from '../utils/debounce';
 
 interface ContactContextType {
   contacts: Contact[];
@@ -12,13 +13,14 @@ interface ContactContextType {
   fetchContacts: (page?: number, search?: string, tags?: string) => Promise<void>;
   createContact: (contactData: CreateContactData) => Promise<void>;
   updateContact: (id: string, contactData: CreateContactData) => Promise<void>;
+  updateContactInState: (updatedContact: Contact) => void;
   deleteContact: (id: string) => Promise<void>;
   selectContact: (contact: Contact | null) => void;
   fetchContactNotes: (contactId: string) => Promise<void>;
   addNote: (contactId: string, content: string) => Promise<void>;
   updateNote: (noteId: string, content: string) => Promise<void>;
   deleteNote: (noteId: string) => Promise<void>;
-  searchContacts: (query: string) => Promise<void>;
+  searchContacts: (query: string) => void;
   clearError: () => void;
 }
 
@@ -43,30 +45,46 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [contactNotes, setContactNotes] = useState<Note[]>([]);
 
+  // Request deduplication
+  const activeRequests = useRef<Map<string, Promise<any>>>(new Map());
+
   const handleError = (err: any, defaultMessage: string) => {
     const message = err.response?.data?.message || err.message || defaultMessage;
     setError(message);
     console.error(err);
   };
 
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
   const fetchContacts = useCallback(async (page = 1, search?: string, tags?: string) => {
-    try {
-      setLoading(true);
-      clearError();
-      const response = await contactService.getContacts(page, 50, search, tags);
-      if (response.success && response.data) {
-        setContacts(response.data);
-      }
-    } catch (err) {
-      handleError(err, 'Failed to fetch contacts');
-    } finally {
-      setLoading(false);
+    const requestKey = `fetch-${page}-${search || ''}-${tags || ''}`;
+
+    // Check if this request is already in progress
+    if (activeRequests.current.has(requestKey)) {
+      return activeRequests.current.get(requestKey);
     }
+
+    const fetchPromise = (async () => {
+      try {
+        setLoading(true);
+        clearError();
+        const response = await contactService.getContacts(page, 50, search, tags);
+        if (response.success && response.data) {
+          setContacts(response.data);
+        }
+      } catch (err) {
+        handleError(err, 'Failed to fetch contacts');
+      } finally {
+        setLoading(false);
+        activeRequests.current.delete(requestKey);
+      }
+    })();
+
+    activeRequests.current.set(requestKey, fetchPromise);
+    return fetchPromise;
   }, []);
 
-  const createContact = async (contactData: CreateContactData) => {
+  const createContact = useCallback(async (contactData: CreateContactData) => {
     try {
       setLoading(true);
       clearError();
@@ -80,9 +98,9 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [clearError]);
 
-  const updateContact = async (id: string, contactData: CreateContactData) => {
+  const updateContact = useCallback(async (id: string, contactData: CreateContactData) => {
     try {
       setLoading(true);
       clearError();
@@ -103,9 +121,9 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [clearError]);
 
-  const deleteContact = async (id: string) => {
+  const deleteContact = useCallback(async (id: string) => {
     try {
       setLoading(true);
       clearError();
@@ -121,14 +139,14 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [clearError]);
 
-  const selectContact = (contact: Contact | null) => {
+  const selectContact = useCallback((contact: Contact | null) => {
     setSelectedContact(contact);
     if (!contact) {
       setContactNotes([]);
     }
-  };
+  }, []);
 
   const fetchContactNotes = useCallback(async (contactId: string) => {
     try {
@@ -142,7 +160,7 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     }
   }, []);
 
-  const addNote = async (contactId: string, content: string) => {
+  const addNote = useCallback(async (contactId: string, content: string) => {
     try {
       clearError();
       const response = await noteService.createNote(contactId, content);
@@ -153,9 +171,9 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
       handleError(err, 'Failed to add note');
       throw err;
     }
-  };
+  }, [clearError]);
 
-  const updateNote = async (noteId: string, content: string) => {
+  const updateNote = useCallback(async (noteId: string, content: string) => {
     try {
       clearError();
       const response = await noteService.updateNote(noteId, content);
@@ -170,9 +188,9 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
       handleError(err, 'Failed to update note');
       throw err;
     }
-  };
+  }, [clearError]);
 
-  const deleteNote = async (noteId: string) => {
+  const deleteNote = useCallback(async (noteId: string) => {
     try {
       clearError();
       await noteService.deleteNote(noteId);
@@ -181,28 +199,57 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
       handleError(err, 'Failed to delete note');
       throw err;
     }
-  };
+  }, [clearError]);
 
-  const searchContacts = useCallback(async (query: string) => {
-    try {
-      setLoading(true);
-      clearError();
-      if (!query.trim()) {
-        await fetchContacts();
-        return;
-      }
-      const response = await contactService.searchContacts(query);
-      if (response.success && response.data) {
-        setContacts(response.data);
-      }
-    } catch (err) {
-      handleError(err, 'Failed to search contacts');
-    } finally {
-      setLoading(false);
+  const updateContactInState = useCallback((updatedContact: Contact) => {
+    setContacts(prev =>
+      prev.map(contact =>
+        contact._id === updatedContact._id ? updatedContact : contact
+      )
+    );
+    if (selectedContact?._id === updatedContact._id) {
+      setSelectedContact(updatedContact);
     }
+  }, [selectedContact]);
+
+  const performSearch = useCallback(async (query: string) => {
+    const requestKey = `search-${query}`;
+
+    // Check if this request is already in progress
+    if (activeRequests.current.has(requestKey)) {
+      return activeRequests.current.get(requestKey);
+    }
+
+    const searchPromise = (async () => {
+      try {
+        setLoading(true);
+        clearError();
+        if (!query.trim()) {
+          await fetchContacts();
+          return;
+        }
+        const response = await contactService.searchContacts(query);
+        if (response.success && response.data) {
+          setContacts(response.data);
+        }
+      } catch (err) {
+        handleError(err, 'Failed to search contacts');
+      } finally {
+        setLoading(false);
+        activeRequests.current.delete(requestKey);
+      }
+    })();
+
+    activeRequests.current.set(requestKey, searchPromise);
+    return searchPromise;
   }, [fetchContacts]);
 
-  const value: ContactContextType = {
+  const searchContacts = useCallback(
+    debounce(performSearch, 300),
+    [performSearch]
+  );
+
+  const value: ContactContextType = useMemo(() => ({
     contacts,
     loading,
     error,
@@ -211,6 +258,7 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     fetchContacts,
     createContact,
     updateContact,
+    updateContactInState,
     deleteContact,
     selectContact,
     fetchContactNotes,
@@ -219,7 +267,25 @@ export const ContactProvider: React.FC<ContactProviderProps> = ({ children }) =>
     deleteNote,
     searchContacts,
     clearError,
-  };
+  }), [
+    contacts,
+    loading,
+    error,
+    selectedContact,
+    contactNotes,
+    fetchContacts,
+    createContact,
+    updateContact,
+    updateContactInState,
+    deleteContact,
+    selectContact,
+    fetchContactNotes,
+    addNote,
+    updateNote,
+    deleteNote,
+    searchContacts,
+    clearError,
+  ]);
 
   return <ContactContext.Provider value={value}>{children}</ContactContext.Provider>;
 };

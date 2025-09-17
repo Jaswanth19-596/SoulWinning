@@ -21,9 +21,12 @@ const getNotes = async (req, res) => {
     const notes = await Note.find({ contactId })
       .sort({ timestamp: -1 });
 
+    // Decrypt notes before sending response
+    const decryptedNotes = notes.map(note => note.toDecryptedJSON());
+
     res.json({
       success: true,
-      data: notes
+      data: decryptedNotes
     });
   } catch (error) {
     console.error('Get notes error:', error);
@@ -66,10 +69,13 @@ const createNote = async (req, res) => {
       userId: req.user._id
     });
 
+    // Decrypt note before sending response
+    const decryptedNote = note.toDecryptedJSON();
+
     res.status(201).json({
       success: true,
       message: 'Note created successfully',
-      data: note
+      data: decryptedNote
     });
   } catch (error) {
     console.error('Create note error:', error);
@@ -109,10 +115,13 @@ const updateNote = async (req, res) => {
       });
     }
 
+    // Decrypt note before sending response
+    const decryptedNote = note.toDecryptedJSON();
+
     res.json({
       success: true,
       message: 'Note updated successfully',
-      data: note
+      data: decryptedNote
     });
   } catch (error) {
     console.error('Update note error:', error);

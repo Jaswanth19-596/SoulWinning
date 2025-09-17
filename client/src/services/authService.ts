@@ -96,8 +96,9 @@ export const authService = {
 
       return user;
     } catch (error) {
-      // If we can't parse the user data, clear it and return null
-      secureStorage.removeItem('user');
+      console.warn('AuthService: Failed to get current user, clearing corrupted data', error);
+      // If we can't parse the user data, clear all auth data
+      secureStorage.clearAllEncryptedData();
       return null;
     }
   },
@@ -107,18 +108,25 @@ export const authService = {
   },
 
   isAuthenticated: (): boolean => {
-    const token = secureStorage.getItem('token');
-    if (!token) return false;
+    try {
+      const token = secureStorage.getItem('token');
+      if (!token) return false;
 
-    // Validate token expiration and integrity
-    const payload = JWTUtils.validateToken(token);
-    if (!payload) {
-      // Token is invalid or expired, clean up
-      authService.logout();
+      // Validate token expiration and integrity
+      const payload = JWTUtils.validateToken(token);
+      if (!payload) {
+        // Token is invalid or expired, clean up
+        authService.logout();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.warn('AuthService: Failed to check authentication status, clearing data', error);
+      // If there's an issue with secure storage, clear everything and start fresh
+      secureStorage.clearAllEncryptedData();
       return false;
     }
-
-    return true;
   },
 
   isTokenExpiringSoon: (): boolean => {

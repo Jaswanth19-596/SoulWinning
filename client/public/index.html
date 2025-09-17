@@ -2,18 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico?v=2" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon.ico?v=2" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#6366f1" />
 
-    <!-- Security Headers -->
+    <!-- Basic Security Headers (Frame-ancestors and X-Frame-Options removed as they cause warnings in meta tags) -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
-    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
 
-    <!-- Content Security Policy -->
+    <!-- Content Security Policy (simplified for development) -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
                    script-src 'self' 'unsafe-inline' 'unsafe-eval';
@@ -23,9 +23,7 @@
                    font-src 'self' data:;
                    object-src 'none';
                    base-uri 'self';
-                   form-action 'self';
-                   frame-ancestors 'none';
-                   block-all-mixed-content;" />
+                   form-action 'self';" />
 
     <meta
       name="description"

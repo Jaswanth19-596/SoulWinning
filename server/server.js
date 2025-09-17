@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -8,6 +9,17 @@ const authRoutes = require('./routes/auth');
 const contactRoutes = require('./routes/contacts');
 const noteRoutes = require('./routes/notes');
 const prayerWallRoutes = require('./routes/prayerWall');
+
+// Test database encryption on startup
+const dbEncryption = require('./utils/dbEncryption');
+console.log('=== Database Encryption Test ===');
+const encryptionTest = dbEncryption.testEncryption();
+if (!encryptionTest) {
+  console.error('❌ Database encryption test failed! Check your configuration.');
+} else {
+  console.log('✅ Database encryption test passed!');
+}
+console.log('================================');
 
 const app = express();
 
@@ -56,6 +68,18 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Enable compression for all responses
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6,
+  threshold: 1024
+}));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

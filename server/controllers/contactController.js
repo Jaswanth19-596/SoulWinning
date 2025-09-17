@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const Contact = require('../models/Contact');
 const Note = require('../models/Note');
 
@@ -28,9 +29,12 @@ const getContacts = async (req, res) => {
 
     const total = await Contact.countDocuments(query);
 
+    // Decrypt contacts before sending response
+    const decryptedContacts = contacts.map(contact => contact.toDecryptedJSON());
+
     res.json({
       success: true,
-      data: contacts,
+      data: decryptedContacts,
       pagination: {
         current: page,
         pages: Math.ceil(total / limit),
@@ -63,11 +67,15 @@ const getContact = async (req, res) => {
     const notes = await Note.find({ contactId: contact._id })
       .sort({ timestamp: -1 });
 
+    // Decrypt contact and notes before sending response
+    const decryptedContact = contact.toDecryptedJSON();
+    const decryptedNotes = notes.map(note => note.toDecryptedJSON());
+
     res.json({
       success: true,
       data: {
-        contact,
-        notes
+        contact: decryptedContact,
+        notes: decryptedNotes
       }
     });
   } catch (error) {
@@ -102,10 +110,13 @@ const createContact = async (req, res) => {
       userId: req.user._id
     });
 
+    // Decrypt contact before sending response
+    const decryptedContact = contact.toDecryptedJSON();
+
     res.status(201).json({
       success: true,
       message: 'Contact created successfully',
-      data: contact
+      data: decryptedContact
     });
   } catch (error) {
     console.error('Create contact error:', error);
@@ -152,10 +163,13 @@ const updateContact = async (req, res) => {
       });
     }
 
+    // Decrypt contact before sending response
+    const decryptedContact = contact.toDecryptedJSON();
+
     res.json({
       success: true,
       message: 'Contact updated successfully',
-      data: contact
+      data: decryptedContact
     });
   } catch (error) {
     console.error('Update contact error:', error);
@@ -206,8 +220,8 @@ const searchContacts = async (req, res) => {
       });
     }
 
-    // Search in notes content
-    const contactIds = await Note.find({
+    // Search in notes first to get contactIds
+    const notesWithQuery = await Note.find({
       userId: req.user._id,
       content: { $regex: q, $options: 'i' }
     }).distinct('contactId');
@@ -219,14 +233,18 @@ const searchContacts = async (req, res) => {
         { name: { $regex: q, $options: 'i' } },
         { address: { $regex: q, $options: 'i' } },
         { phone: { $regex: q, $options: 'i' } },
-        { tags: { $in: [new RegExp(q, 'i')] } }, // Search in tags array
-        { _id: { $in: contactIds } } // Match notes content
+        { tags: { $in: [new RegExp(q, 'i')] } },
+        { prayerRequest: { $regex: q, $options: 'i' } },
+        { _id: { $in: notesWithQuery } }
       ]
     }).sort({ createdAt: -1 });
 
+    // Decrypt contacts before sending response
+    const decryptedContacts = contacts.map(contact => contact.toDecryptedJSON());
+
     res.json({
       success: true,
-      data: contacts
+      data: decryptedContacts
     });
   } catch (error) {
     console.error('Search contacts error:', error);

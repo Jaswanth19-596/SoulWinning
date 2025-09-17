@@ -1,7 +1,7 @@
 # Soul Winning App - Technical Architecture
 
 ## System Overview
-A full-stack MERN (MongoDB, Express, React, Node.js) application designed for soul winning contact management with a focus on mobile usability and data security.
+A full-stack MERN (MongoDB, Express, React, Node.js) application designed for soul winning contact management with enterprise-grade security, database-level encryption, and team collaboration features including prayer walls.
 
 ## Architecture Diagram
 ```
@@ -11,122 +11,170 @@ A full-stack MERN (MongoDB, Express, React, Node.js) application designed for so
 │                 │    │                 │    │                 │
 │ - Components    │    │ - Routes        │    │ - Users         │
 │ - Context API   │    │ - Middleware    │    │ - Contacts      │
-│ - Axios HTTP    │    │ - Controllers   │    │ - Notes         │
-│ - JWT Storage   │    │ - Auth Guards   │    │                 │
+│ - Secure Storage│    │ - Controllers   │    │ - Notes         │
+│ - JWT + Crypto  │    │ - DB Encryption │    │ - PrayerComments│
+│ - Theme System  │    │ - Auth Guards   │    │ - Encrypted Data│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## Security Layer
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SECURITY ARCHITECTURE                   │
+├─────────────────────────────────────────────────────────────┤
+│ Client Side                Server Side              Database │
+│ ┌─────────────┐           ┌─────────────┐         ┌────────┐ │
+│ │SecureStorage│ ◄────────►│AES-256-CBC  │ ◄──────►│Encrypted│ │
+│ │JWT Tokens   │           │Encryption   │         │Data    │ │
+│ │Rate Limiting│           │Legacy Support│        │Storage │ │
+│ └─────────────┘           └─────────────┘         └────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Frontend Architecture (React)
 
 ### Technology Stack
-- **React 18+**: Modern functional components with hooks
+- **React 18+**: Modern functional components with hooks and TypeScript
 - **React Router v6**: Client-side routing and navigation
-- **Context API**: Global state management for authentication and contacts
-- **Axios**: HTTP client with request/response interceptors
-- **CSS Modules**: Scoped styling with responsive design
+- **Context API**: Global state management for authentication, contacts, and themes
+- **Axios**: HTTP client with secure request/response interceptors
+- **Tailwind CSS**: Utility-first CSS with responsive design and dark mode
+- **Framer Motion**: Smooth animations and transitions
+- **Lucide React**: Modern icon library
 
 ### Component Structure
 ```
 src/
 ├── components/
 │   ├── auth/
-│   │   ├── Login.js
-│   │   ├── Register.js
-│   │   └── ProtectedRoute.js
+│   │   ├── Login.tsx
+│   │   ├── Register.tsx
+│   │   └── ProtectedRoute.tsx
 │   ├── contacts/
-│   │   ├── ContactList.js
-│   │   ├── ContactCard.js
-│   │   ├── ContactForm.js
-│   │   └── ContactDetail.js
+│   │   ├── ContactList.tsx
+│   │   ├── ContactCard.tsx
+│   │   ├── ContactForm.tsx
+│   │   └── ContactDetail.tsx
 │   ├── notes/
-│   │   ├── NoteList.js
-│   │   ├── NoteForm.js
-│   │   └── NoteCard.js
+│   │   ├── NoteList.tsx
+│   │   ├── NoteForm.tsx
+│   │   └── NoteCard.tsx
+│   ├── prayer-wall/
+│   │   ├── TeamPrayerWall.tsx
+│   │   ├── PrayerToggle.tsx
+│   │   └── PrayerItemComments.tsx
 │   ├── search/
-│   │   ├── SearchBar.js
-│   │   └── FilterTags.js
-│   └── shared/
-│       ├── Header.js
-│       ├── Loading.js
-│       └── ErrorMessage.js
+│   │   ├── SearchBar.tsx
+│   │   └── FilterTags.tsx
+│   ├── shared/
+│   │   ├── Header.tsx (with mobile menu)
+│   │   ├── Loading.tsx
+│   │   └── ErrorMessage.tsx
+│   └── ui/
+│       ├── button.tsx
+│       ├── input.tsx
+│       ├── card.tsx
+│       ├── avatar.tsx
+│       └── theme-toggle.tsx
 ├── contexts/
-│   ├── AuthContext.js
-│   └── ContactContext.js
+│   ├── AuthContext.tsx
+│   ├── ContactContext.tsx
+│   └── ThemeContext.tsx
 ├── services/
-│   ├── api.js
-│   ├── authService.js
-│   └── contactService.js
+│   ├── api.ts (with encryption support)
+│   ├── authService.ts
+│   └── prayerWallService.ts
 ├── utils/
-│   ├── tokenUtils.js
-│   └── validation.js
+│   ├── secureStorage.ts (client-side encryption)
+│   ├── jwtUtils.ts
+│   ├── errorSanitizer.ts
+│   ├── inputSanitizer.ts
+│   ├── rateLimiter.ts
+│   ├── cache.ts
+│   └── debounce.ts
+├── types/
+│   └── index.ts
 └── styles/
-    ├── globals.css
-    └── components/
+    └── globals.css (Tailwind + custom styles)
 ```
 
 ### State Management Strategy
-- **AuthContext**: User authentication state, login/logout functions
-- **ContactContext**: Contacts data, CRUD operations, search state
-- **Local Component State**: Form inputs, UI state, loading indicators
+- **AuthContext**: User authentication state, secure token management, login/logout functions
+- **ContactContext**: Contacts data, CRUD operations, search state, pagination
+- **ThemeContext**: Light/dark mode, system preference detection, theme persistence
+- **Local Component State**: Form inputs, UI state, loading indicators, mobile menu state
 
 ## Backend Architecture (Node.js/Express)
 
 ### Technology Stack
-- **Node.js**: JavaScript runtime environment
-- **Express.js**: Web application framework
-- **Mongoose**: MongoDB ODM for data modeling
-- **JWT**: JSON Web Tokens for authentication
-- **bcrypt**: Password hashing library
-- **cors**: Cross-Origin Resource Sharing middleware
+- **Node.js**: JavaScript runtime environment with async/await patterns
+- **Express.js**: Web application framework with comprehensive middleware
+- **Mongoose**: MongoDB ODM with encryption middleware and schema validation
+- **JWT**: JSON Web Tokens for stateless authentication
+- **bcrypt**: Password hashing with salt rounds for security
+- **crypto**: Node.js built-in module for AES-256-CBC database encryption
+- **cors**: Cross-Origin Resource Sharing with environment-based configuration
+- **dotenv**: Environment variable management for secure configuration
 
 ### Server Structure
 ```
 server/
 ├── config/
-│   ├── database.js
-│   └── jwt.js
+│   └── database.js (MongoDB connection with error handling)
 ├── controllers/
-│   ├── authController.js
-│   ├── contactController.js
-│   └── noteController.js
+│   ├── authController.js (with encrypted email lookup)
+│   ├── contactController.js (with encrypted data handling)
+│   ├── noteController.js (with encrypted content)
+│   └── prayerWallController.js (team prayer features)
 ├── middleware/
-│   ├── auth.js
-│   ├── validation.js
-│   └── errorHandler.js
+│   ├── auth.js (JWT verification)
+│   ├── validation.js (input sanitization)
+│   └── errorHandler.js (centralized error management)
 ├── models/
-│   ├── User.js
-│   ├── Contact.js
-│   └── Note.js
+│   ├── User.js (with email encryption)
+│   ├── Contact.js (with full field encryption)
+│   ├── Note.js (with content encryption)
+│   └── PrayerComment.js (prayer wall comments)
 ├── routes/
-│   ├── auth.js
-│   ├── contacts.js
-│   └── notes.js
+│   ├── auth.js (authentication endpoints)
+│   ├── contacts.js (CRUD + search)
+│   ├── notes.js (note management)
+│   └── prayerWall.js (prayer wall features)
 ├── utils/
-│   ├── logger.js
-│   └── helpers.js
-└── server.js
+│   └── dbEncryption.js (AES-256-CBC encryption service)
+├── scripts/
+│   └── generateEncryptionKey.js (key generation utility)
+└── server.js (with encryption testing on startup)
 ```
 
 ### API Endpoints
 ```
 Authentication:
-POST /api/auth/register    - User registration
-POST /api/auth/login       - User login
-GET  /api/auth/profile     - Get user profile
+POST /api/auth/register    - User registration with encrypted email
+POST /api/auth/login       - User login (username or encrypted email)
+GET  /api/auth/profile     - Get user profile with decrypted data
 
 Contacts:
-GET    /api/contacts           - Get user's contacts (with pagination)
-POST   /api/contacts           - Create new contact
-GET    /api/contacts/:id       - Get specific contact
-PUT    /api/contacts/:id       - Update contact
-DELETE /api/contacts/:id       - Delete contact
-GET    /api/contacts/search    - Search contacts
+GET    /api/contacts           - Get user's contacts (with pagination, decrypted)
+POST   /api/contacts           - Create new contact (auto-encrypted)
+GET    /api/contacts/:id       - Get specific contact with notes (decrypted)
+PUT    /api/contacts/:id       - Update contact (re-encrypted)
+DELETE /api/contacts/:id       - Delete contact and associated notes
+GET    /api/contacts/search    - Search contacts (server-side decryption)
 
 Notes:
-GET    /api/contacts/:id/notes - Get contact's notes
-POST   /api/contacts/:id/notes - Add note to contact
-PUT    /api/notes/:id          - Update note
+GET    /api/contacts/:id/notes - Get contact's notes (decrypted)
+POST   /api/contacts/:id/notes - Add note to contact (auto-encrypted)
+PUT    /api/notes/:id          - Update note (re-encrypted)
 DELETE /api/notes/:id          - Delete note
+
+Prayer Wall:
+GET    /api/prayer-wall                    - Get shared prayer requests (decrypted)
+GET    /api/prayer-wall/:contactId/comments - Get prayer comments
+POST   /api/prayer-wall/:contactId/comments - Add prayer comment/reaction
+PUT    /api/prayer-wall/comments/:commentId - Update prayer comment
+DELETE /api/prayer-wall/comments/:commentId - Delete prayer comment
+PATCH  /api/prayer-wall/contacts/:contactId/toggle - Toggle prayer sharing
 ```
 
 ## Database Architecture (MongoDB)
@@ -137,9 +185,9 @@ DELETE /api/notes/:id          - Delete note
 ```javascript
 {
   _id: ObjectId,
-  username: String (unique, required),
-  email: String (unique, required),
-  password: String (hashed, required),
+  username: String (unique, required, unencrypted for login),
+  email: String (unique, required, AES-256-CBC encrypted),
+  password: String (bcrypt hashed with salt),
   createdAt: Date,
   updatedAt: Date
 }
@@ -149,11 +197,13 @@ DELETE /api/notes/:id          - Delete note
 ```javascript
 {
   _id: ObjectId,
-  name: String (required),
-  address: String,
-  phone: String,
-  tags: [String],
-  userId: ObjectId (ref: 'User'),
+  name: String (required, AES-256-CBC encrypted),
+  address: String (AES-256-CBC encrypted),
+  phone: String (AES-256-CBC encrypted),
+  tags: [String] (each tag AES-256-CBC encrypted),
+  prayerRequest: String (AES-256-CBC encrypted),
+  sharedToPrayerList: Boolean (unencrypted for querying),
+  userId: ObjectId (ref: 'User', unencrypted for querying),
   createdAt: Date,
   updatedAt: Date
 }
@@ -163,10 +213,23 @@ DELETE /api/notes/:id          - Delete note
 ```javascript
 {
   _id: ObjectId,
-  content: String (required),
+  content: String (required, AES-256-CBC encrypted),
+  contactId: ObjectId (ref: 'Contact', unencrypted for querying),
+  userId: ObjectId (ref: 'User', unencrypted for querying),
+  timestamp: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### PrayerComments Collection
+```javascript
+{
+  _id: ObjectId,
+  content: String (required, prayer comment text),
   contactId: ObjectId (ref: 'Contact'),
   userId: ObjectId (ref: 'User'),
-  timestamp: Date,
+  reaction: String (enum: 'praying', 'amen', 'heart'),
   createdAt: Date,
   updatedAt: Date
 }
@@ -190,41 +253,79 @@ DELETE /api/notes/:id          - Delete note
 
 ## Security Architecture
 
-### Authentication Flow
-1. User submits login credentials
-2. Server validates credentials against database
-3. Server generates JWT token with user ID and expiration
-4. Client stores token in localStorage/sessionStorage
-5. Client includes token in Authorization header for protected requests
-6. Server validates token on each protected route
+### Database Encryption System
+```javascript
+// AES-256-CBC Encryption Flow
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Client Data   │───▶│ Server Encryption │───▶│ Database Storage│
+│  (Plaintext)    │    │   (AES-256-CBC)   │    │   (Encrypted)   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+        ▲                                                │
+        │                ┌──────────────────┐           │
+        └────────────────│ Server Decryption│◄──────────┘
+                         │   (For Display)   │
+                         └──────────────────┘
+```
 
-### Data Protection
-- **Password Security**: bcrypt hashing with salt rounds
-- **JWT Security**: Short expiration times with refresh token strategy
-- **Input Validation**: Server-side validation for all inputs
-- **CORS Configuration**: Restricted origins for production
-- **Rate Limiting**: Prevent brute force attacks
+#### Encryption Implementation
+- **Algorithm**: AES-256-CBC with random initialization vectors
+- **Key Management**: Environment-based 32-byte keys with base64 encoding
+- **Legacy Support**: Automatic detection and migration of unencrypted data
+- **Field-Level**: Granular encryption of sensitive fields only
+- **Performance**: Encryption/decryption handled at Mongoose middleware level
+
+#### Encrypted vs Unencrypted Fields
+```javascript
+// ENCRYPTED (sensitive data)
+- Contact: name, address, phone, tags, prayerRequest
+- Note: content
+- User: email
+
+// UNENCRYPTED (for querying/indexing)
+- User: username (for login)
+- Contact: userId, sharedToPrayerList, timestamps
+- Note: contactId, userId, timestamp
+- ObjectIds and references
+```
+
+### Authentication Flow
+1. User submits login credentials (username or email)
+2. Server handles encrypted email lookup with legacy support
+3. Password verification using bcrypt with salt rounds
+4. JWT token generation with secure expiration
+5. Client stores token in encrypted secure storage
+6. Token validation on protected routes with automatic refresh
+
+### Multi-Layer Security
+- **Client Side**: Secure storage, input sanitization, rate limiting
+- **Transport**: HTTPS, CORS configuration, request validation
+- **Server Side**: JWT verification, input validation, error sanitization
+- **Database**: Field-level AES-256-CBC encryption, secure indexes
 
 ## Development Environment
 
 ### Environment Variables
 ```
-# Server
-PORT=5000
+# Server (.env)
+PORT=5001
 NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/soul-winning
-JWT_SECRET=your-secret-key
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/soul-winning
+JWT_SECRET=your-super-secret-jwt-key
 JWT_EXPIRES_IN=24h
+CLIENT_URL=http://localhost:3000
+DB_ENCRYPTION_KEY=base64-encoded-32-byte-key-for-aes-256-cbc
 
-# Client
-REACT_APP_API_URL=http://localhost:5000/api
+# Client (.env)
+REACT_APP_API_URL=http://localhost:5001/api
 ```
 
 ### Development Tools
 - **nodemon**: Auto-restart server during development
 - **concurrently**: Run client and server simultaneously
-- **ESLint**: Code quality and consistency
-- **Prettier**: Code formatting
+- **TypeScript**: Type safety and better developer experience
+- **Tailwind CSS**: Utility-first CSS framework with dark mode
+- **Framer Motion**: Animation library for smooth transitions
+- **Encryption Key Generator**: `scripts/generateEncryptionKey.js` for secure key creation
 
 ## Deployment Architecture
 

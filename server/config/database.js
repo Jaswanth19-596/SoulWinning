@@ -10,8 +10,13 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000, // Increased timeout for Atlas
       socketTimeoutMS: 45000,
-      family: 4 // Use IPv4, skip trying IPv6
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      minPoolSize: 5, // Maintain at least 5 socket connections
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
     });
+
+    // Set mongoose options
+    mongoose.set('bufferCommands', false);
 
     console.log('📊 ========================================');
     console.log('✅ MONGODB CONNECTION SUCCESSFUL!');

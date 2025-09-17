@@ -1,11 +1,12 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Soul Winning",
+  "name": "Soul Winning - Ministry Contact Management",
+  "description": "Manage your soul winning contacts and track evangelism efforts securely",
   "icons": [
     {
       "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "sizes": "32x32",
+      "type": "image/png"
     },
     {
       "src": "logo192.png",
@@ -20,6 +21,8 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#6366f1",
+  "background_color": "#ffffff",
+  "categories": ["productivity", "lifestyle", "utilities"],
+  "orientation": "portrait-primary"
 }
