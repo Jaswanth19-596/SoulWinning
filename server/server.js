@@ -10,16 +10,6 @@ const contactRoutes = require('./routes/contacts');
 const noteRoutes = require('./routes/notes');
 const prayerWallRoutes = require('./routes/prayerWall');
 
-// Test database encryption on startup
-const dbEncryption = require('./utils/dbEncryption');
-console.log('=== Database Encryption Test ===');
-const encryptionTest = dbEncryption.testEncryption();
-if (!encryptionTest) {
-  console.error('❌ Database encryption test failed! Check your configuration.');
-} else {
-  console.log('✅ Database encryption test passed!');
-}
-console.log('================================');
 
 const app = express();
 

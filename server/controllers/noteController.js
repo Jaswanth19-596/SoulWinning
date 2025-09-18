@@ -28,13 +28,11 @@ const getNotes = async (req, res) => {
 
     console.log('getNotes: Found', notes.length, 'notes for contactId:', contactId);
 
-    // Decrypt notes before sending response
-    const decryptedNotes = notes.map(note => note.toDecryptedJSON());
-    console.log('getNotes: Decrypted notes:', decryptedNotes);
+    console.log('getNotes: Found notes:', notes);
 
     res.json({
       success: true,
-      data: decryptedNotes
+      data: notes
     });
   } catch (error) {
     console.error('Get notes error:', error);
@@ -77,13 +75,10 @@ const createNote = async (req, res) => {
       userId: req.user._id
     });
 
-    // Decrypt note before sending response
-    const decryptedNote = note.toDecryptedJSON();
-
     res.status(201).json({
       success: true,
       message: 'Note created successfully',
-      data: decryptedNote
+      data: note
     });
   } catch (error) {
     console.error('Create note error:', error);
@@ -123,13 +118,10 @@ const updateNote = async (req, res) => {
       });
     }
 
-    // Decrypt note before sending response
-    const decryptedNote = note.toDecryptedJSON();
-
     res.json({
       success: true,
       message: 'Note updated successfully',
-      data: decryptedNote
+      data: note
     });
   } catch (error) {
     console.error('Update note error:', error);

@@ -29,12 +29,9 @@ const getContacts = async (req, res) => {
 
     const total = await Contact.countDocuments(query);
 
-    // Decrypt contacts before sending response
-    const decryptedContacts = contacts.map(contact => contact.toDecryptedJSON());
-
     res.json({
       success: true,
-      data: decryptedContacts,
+      data: contacts,
       pagination: {
         current: page,
         pages: Math.ceil(total / limit),
@@ -70,15 +67,11 @@ const getContact = async (req, res) => {
     })
       .sort({ timestamp: -1 });
 
-    // Decrypt contact and notes before sending response
-    const decryptedContact = contact.toDecryptedJSON();
-    const decryptedNotes = notes.map(note => note.toDecryptedJSON());
-
     res.json({
       success: true,
       data: {
-        contact: decryptedContact,
-        notes: decryptedNotes
+        contact: contact,
+        notes: notes
       }
     });
   } catch (error) {
@@ -113,13 +106,10 @@ const createContact = async (req, res) => {
       userId: req.user._id
     });
 
-    // Decrypt contact before sending response
-    const decryptedContact = contact.toDecryptedJSON();
-
     res.status(201).json({
       success: true,
       message: 'Contact created successfully',
-      data: decryptedContact
+      data: contact
     });
   } catch (error) {
     console.error('Create contact error:', error);
@@ -166,13 +156,10 @@ const updateContact = async (req, res) => {
       });
     }
 
-    // Decrypt contact before sending response
-    const decryptedContact = contact.toDecryptedJSON();
-
     res.json({
       success: true,
       message: 'Contact updated successfully',
-      data: decryptedContact
+      data: contact
     });
   } catch (error) {
     console.error('Update contact error:', error);
@@ -245,12 +232,9 @@ const searchContacts = async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
 
-    // Decrypt contacts before sending response
-    const decryptedContacts = contacts.map(contact => contact.toDecryptedJSON());
-
     res.json({
       success: true,
-      data: decryptedContacts
+      data: contacts
     });
   } catch (error) {
     console.error('Search contacts error:', error);

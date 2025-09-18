@@ -16,13 +16,12 @@ const getPrayerWallItems = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Get comment counts for each prayer item and decrypt data
+    // Get comment counts for each prayer item
     const itemsWithCounts = await Promise.all(
       prayerItems.map(async (item) => {
         const commentCount = await PrayerComment.countDocuments({ contactId: item._id });
-        const decryptedItem = item.toDecryptedJSON();
         return {
-          ...decryptedItem,
+          ...item.toObject(),
           commentCount
         };
       })

@@ -24,8 +24,8 @@ const register = async (req, res) => {
     // Check for existing username (unencrypted)
     const existingUsername = await User.findOne({ username });
 
-    // Check for existing email (encrypted)
-    const existingEmail = await User.findByEmail(email);
+    // Check for existing email
+    const existingEmail = await User.findOne({ email });
 
     if (existingUsername || existingEmail) {
       return res.status(400).json({
@@ -76,10 +76,10 @@ const login = async (req, res) => {
     let user = await User.findOne({ username });
     console.log('Found by username:', !!user);
 
-    // If not found by username, try by email (encrypted)
+    // If not found by username, try by email
     if (!user) {
       console.log('Trying to find by email...');
-      user = await User.findByEmail(username);
+      user = await User.findOne({ email: username });
       console.log('Found by email:', !!user);
     }
 
