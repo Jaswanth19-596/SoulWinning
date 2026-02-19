@@ -56,9 +56,10 @@ describe('Login Component', () => {
     
     const input = screen.getByPlaceholderText(/Enter your access code/i);
     const submitButton = screen.getByRole('button', { name: /Enter Ministry/i });
+    const form = submitButton.closest('form')!;
 
     fireEvent.change(input, { target: { value: 'bus1' } });
-    fireEvent.click(submitButton);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('BUS1');
@@ -73,9 +74,10 @@ describe('Login Component', () => {
     
     const input = screen.getByPlaceholderText(/Enter your access code/i);
     const submitButton = screen.getByRole('button', { name: /Enter Ministry/i });
+    const form = submitButton.closest('form')!;
 
     fireEvent.change(input, { target: { value: 'INVALID' } });
-    fireEvent.click(submitButton);
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
@@ -84,18 +86,16 @@ describe('Login Component', () => {
 
   test('shows loading state during submission', async () => {
     // Mock login to hang so we can check loading state
-    mockLogin.mockImplementation(() => {
-        console.log('Mock Login Called (Hanging)');
-        return new Promise(resolve => setTimeout(resolve, 100));
-    });
+    mockLogin.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
     
     render(<Login />);
     
     const input = screen.getByPlaceholderText(/Enter your access code/i);
     const submitButton = screen.getByRole('button', { name: /Enter Ministry/i });
+    const form = submitButton.closest('form')!;
 
     fireEvent.change(input, { target: { value: 'BUS1' } });
-    fireEvent.click(submitButton);
+    fireEvent.submit(form);
 
     // Button should be disabled and loading
     expect(submitButton).toBeDisabled();

@@ -48,9 +48,7 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login Submit:', accessCode);
     if (!accessCode.trim()) {
-      console.log('Login Error: empty code');
       setError('Please enter your bus access code');
       return;
     }
@@ -58,11 +56,8 @@ const Login: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      console.log('Calling login...');
       await login(accessCode.trim());
-      console.log('Login success');
     } catch (err: any) {
-      console.log('Login failed:', err);
       setError(err.message || 'Invalid access code');
     } finally {
       setLoading(false);

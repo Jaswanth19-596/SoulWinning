@@ -50,10 +50,7 @@ const renderWithRouter = (component: React.ReactNode) => {
 describe('RiderList Component', () => {
   beforeEach(() => {
     (riderService.getRiders as jest.Mock).mockReset();
-    (riderService.getRiders as jest.Mock).mockImplementation(async () => {
-        console.log('RiderService Mock Called'); 
-        return mockRiders;
-    });
+    (riderService.getRiders as jest.Mock).mockResolvedValue(mockRiders);
   });
 
   test('renders list of riders', async () => {

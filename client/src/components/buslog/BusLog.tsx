@@ -227,9 +227,7 @@ interface EnhancedAttendee {
 
   // Hydrate attendees
   const attendees = useMemo(() => {
-    console.log('BusLog Render - Log:', log);
     if (!log) return [];
-    console.log('BusLog Render - Attendance Keys:', Object.keys(log.attendance));
     return Object.entries(log.attendance).map(([id, record]) => {
       const master = masterList[id];
       return {
