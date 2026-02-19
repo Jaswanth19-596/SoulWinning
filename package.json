@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "A contact management system for church soul winning outreach activities",
   "scripts": {
-    "start": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "test": "cd client && npm test",
+    "start": "cd client && npm install && npm start",
+    "build": "cd client && npm install && npm run build",
+    "test": "cd client && npm install && npm test",
     "install-deps": "cd client && npm install",
-    "deploy": "cd client && npm run build && firebase deploy"
+    "deploy": "cd client && npm install && npm run build && firebase deploy"
   },
   "keywords": [
     "soul-winning",
