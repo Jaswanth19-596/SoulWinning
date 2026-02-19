@@ -35,6 +35,20 @@ export async function seedBusKeys() {
       section: 'North',
       label: 'Bus 2 Worker',
     },
+    {
+      code: 'BUS3',
+      role: 'captain',
+      bus_route: 'Route 3',
+      section: 'North',
+      label: 'Bus 3 Captain',
+    },
+    {
+      code: 'BUS3W',
+      role: 'worker',
+      bus_route: 'Route 3',
+      section: 'North',
+      label: 'Bus 3 Worker',
+    },
   ];
 
   for (const key of busKeys) {
