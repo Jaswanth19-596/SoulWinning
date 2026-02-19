@@ -7,43 +7,27 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-
-const DEFAULT_KEYS = [
-  { code: 'BUS1', role: 'captain', bus_route: 'Route 1', section: 'Main', label: 'Bus 1 Captain' },
-  { code: 'BUS1W', role: 'worker', bus_route: 'Route 1', section: 'Main', label: 'Bus 1 Worker' },
-  { code: 'BUS2', role: 'captain', bus_route: 'Route 2', section: 'North', label: 'Bus 2 Captain' },
-  { code: 'BUS2W', role: 'worker', bus_route: 'Route 2', section: 'North', label: 'Bus 2 Worker' },
-];
+import { useNavigate } from 'react-router-dom';
+import { seedService } from '../../services/seedService'; // Assuming this service exists
 
 const Login: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate(); // Added as per instruction
 
-  // Auto-seed bus keys on first load
+  // Auto-seed check on mount
   useEffect(() => {
-    const seed = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, 'bus_keys'));
-        if (snapshot.empty) {
-          setSeeding(true);
-          for (const key of DEFAULT_KEYS) {
-            await addDoc(collection(db, 'bus_keys'), {
-              ...key,
-              created_at: new Date().toISOString(),
-            });
-          }
-          console.log('✅ Bus keys seeded');
-          setSeeding(false);
+    const checkSeed = async () => {
+        try {
+            // Check if keys exist, if not seed
+            await seedService.seed();
+        } catch (err) {
+            console.error("Seed error:", err);
         }
-      } catch (err) {
-        console.error('Seed error:', err);
-        setSeeding(false);
-      }
     };
-    seed();
+    checkSeed();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,6 +41,8 @@ const Login: React.FC = () => {
       setLoading(true);
       setError('');
       await login(accessCode.trim());
+      // Optionally navigate after successful login, if 'navigate' is intended for use
+      // navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Invalid access code');
     } finally {

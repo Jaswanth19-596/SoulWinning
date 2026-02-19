@@ -11,7 +11,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { Worker, CreateWorkerData, DayType, AttendanceLog } from '../types';
+import { Worker, CreateWorkerData, DayType } from '../types';
 
 export const workerService = {
   async getWorkers(busRoute: string, dayType: DayType): Promise<Worker[]> {

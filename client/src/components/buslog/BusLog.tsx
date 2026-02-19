@@ -10,8 +10,7 @@ import {
   Users,
   Cake,
   AlertCircle,
-  MessageCircle,
-  CheckCircle2
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
@@ -56,7 +55,8 @@ const isAtRisk = (lastRode?: string) => {
 
 const BusLogView: React.FC = () => {
   const { session } = useAuth();
-  const { dayType } = useApp(); // Access global dayType
+  // dayType is unused, removing it from destructuring
+  const { } = useApp(); 
   const [log, setLog] = useState<BusLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

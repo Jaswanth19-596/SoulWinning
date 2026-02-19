@@ -11,7 +11,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { Rider, CreateRiderData, DayType, VisitLog } from '../types';
+import { Rider, CreateRiderData, DayType } from '../types';
 
 export const riderService = {
   async getRiders(busRoute: string, dayType: DayType): Promise<Rider[]> {

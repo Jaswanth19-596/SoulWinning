@@ -43,7 +43,9 @@ const WorkerDetail: React.FC = () => {
     }
   };
 
-  useEffect(() => { loadWorker(); }, [id]);
+  useEffect(() => {
+    loadWorker();
+  }, [loadWorker]);
 
   const isPresentToday = worker
     ? (worker.attendance_log || []).some((a) => a.date === today)

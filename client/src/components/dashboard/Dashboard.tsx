@@ -16,7 +16,7 @@ import { prospectService } from '../../services/prospectService';
 import { riderService } from '../../services/riderService';
 import { workerService } from '../../services/workerService';
 import { DashboardStats } from '../../types';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 
 const Dashboard: React.FC = () => {

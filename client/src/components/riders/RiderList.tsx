@@ -6,9 +6,9 @@ import {
   Plus,
   Phone,
   MapPin,
-  Check,
-  ChevronRight,
   Calendar,
+  Filter,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';

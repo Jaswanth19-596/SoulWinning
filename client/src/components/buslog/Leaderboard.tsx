@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Medal, Star } from 'lucide-react';
+import { Trophy, Star, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface LeaderboardProps {

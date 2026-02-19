@@ -49,7 +49,7 @@ const RiderDetail: React.FC = () => {
 
   useEffect(() => {
     loadRider();
-  }, [id]);
+  }, [loadRider]);
 
   const isVisitedToday = rider
     ? (rider.visit_history || []).some((v) => v.date === today)

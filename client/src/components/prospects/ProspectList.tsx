@@ -6,9 +6,7 @@ import {
   Plus,
   Phone,
   MapPin,
-  Star,
   ArrowRightLeft,
-  Filter,
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
