@@ -33,7 +33,6 @@ const ProspectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { session, isCaptain } = useAuth();
-  const { } = useApp();
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

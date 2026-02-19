@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { KeyRound, ArrowRight, AlertCircle, Bus, Heart } from 'lucide-react';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../services/firebaseConfig';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { useNavigate } from 'react-router-dom';
-import { seedService } from '../../services/seedService'; // Assuming this service exists
+import { seedService } from '../../services/seedService';
 
 const Login: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate(); // Added as per instruction
 
   // Auto-seed check on mount
   useEffect(() => {

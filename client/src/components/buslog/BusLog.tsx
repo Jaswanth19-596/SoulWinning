@@ -55,8 +55,7 @@ const isAtRisk = (lastRode?: string) => {
 
 const BusLogView: React.FC = () => {
   const { session } = useAuth();
-  // dayType is unused, removing it from destructuring
-  const { } = useApp(); 
+  // dayType removed
   const [log, setLog] = useState<BusLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
