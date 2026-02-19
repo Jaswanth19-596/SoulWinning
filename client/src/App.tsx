@@ -1,81 +1,70 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ContactProvider } from './contexts/ContactContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AppProvider } from './contexts/AppContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import Header from './components/shared/Header';
 import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import ContactList from './components/contacts/ContactList';
-import ContactForm from './components/contacts/ContactForm';
-import ContactDetail from './components/contacts/ContactDetail';
-import TeamPrayerWall from './components/prayer-wall/TeamPrayerWall';
+import MainView from './components/shared/MainView';
+import ProspectForm from './components/prospects/ProspectForm';
+import ProspectDetail from './components/prospects/ProspectDetail';
+import RiderForm from './components/riders/RiderForm';
+import RiderDetail from './components/riders/RiderDetail';
+import WorkerForm from './components/workers/WorkerForm';
+import WorkerDetail from './components/workers/WorkerDetail';
+import Dashboard from './components/dashboard/Dashboard';
 import './styles/globals.css';
+
+// Redirects authenticated users away from login
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return null;
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
 
 const App: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="soul-winning-theme">
       <AuthProvider>
-        <ContactProvider>
+        <AppProvider>
           <Router>
             <div className="min-h-screen bg-background text-foreground gradient-bg">
               <Header />
-              <main className="container mx-auto px-4 py-8">
-              <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <main className="container mx-auto px-4 py-6">
+                <Routes>
+                  {/* Public */}
+                  <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
 
-              {/* Protected routes */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <ContactList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/contacts/new"
-                element={
-                  <ProtectedRoute>
-                    <ContactForm />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/contacts/:id"
-                element={
-                  <ProtectedRoute>
-                    <ContactDetail />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/contacts/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <ContactForm isEdit={true} />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/prayer-wall"
-                element={
-                  <ProtectedRoute>
-                    <TeamPrayerWall />
-                  </ProtectedRoute>
-                }
-              />
+                  {/* Main view (switches between Prospects/Riders/Workers) */}
+                  <Route path="/" element={<ProtectedRoute><MainView /></ProtectedRoute>} />
 
-              {/* Catch all route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-            </main>
-          </div>
+                  {/* Prospects */}
+                  <Route path="/prospects/new" element={<ProtectedRoute><ProspectForm /></ProtectedRoute>} />
+                  <Route path="/prospects/:id" element={<ProtectedRoute><ProspectDetail /></ProtectedRoute>} />
+                  <Route path="/prospects/:id/edit" element={<ProtectedRoute><ProspectForm isEdit /></ProtectedRoute>} />
+
+                  {/* Riders */}
+                  <Route path="/riders/new" element={<ProtectedRoute><RiderForm /></ProtectedRoute>} />
+                  <Route path="/riders/:id" element={<ProtectedRoute><RiderDetail /></ProtectedRoute>} />
+                  <Route path="/riders/:id/edit" element={<ProtectedRoute><RiderForm isEdit /></ProtectedRoute>} />
+
+                  {/* Workers */}
+                  <Route path="/workers/new" element={<ProtectedRoute><WorkerForm /></ProtectedRoute>} />
+                  <Route path="/workers/:id" element={<ProtectedRoute><WorkerDetail /></ProtectedRoute>} />
+                  <Route path="/workers/:id/edit" element={<ProtectedRoute><WorkerForm isEdit /></ProtectedRoute>} />
+
+                  {/* Dashboard & Reports */}
+                  <Route path="/reports" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
+                  {/* Catch all */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </div>
           </Router>
-        </ContactProvider>
+        </AppProvider>
       </AuthProvider>
     </ThemeProvider>
   );
