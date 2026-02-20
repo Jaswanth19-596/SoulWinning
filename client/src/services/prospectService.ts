@@ -35,12 +35,22 @@ export const prospectService = {
 
   async createProspect(data: CreateProspectData): Promise<Prospect> {
     const now = new Date().toISOString();
-    const docRef = await addDoc(collection(db, 'prospects'), {
+    const prospectData: Record<string, any> = {
       ...data,
       created_at: now,
       updated_at: now,
+    };
+    // Strip undefined values — Firestore rejects them
+    Object.keys(prospectData).forEach(key => {
+      if (prospectData[key] === undefined) delete prospectData[key];
+      if (key === 'address' && typeof prospectData[key] === 'object') {
+        Object.keys(prospectData[key]).forEach(k => {
+          if (prospectData[key][k] === undefined) delete prospectData[key][k];
+        });
+      }
     });
-    return { id: docRef.id, ...data, created_at: now, updated_at: now } as Prospect;
+    const docRef = await addDoc(collection(db, 'prospects'), prospectData);
+    return { id: docRef.id, ...prospectData, created_at: now, updated_at: now } as Prospect;
   },
 
   async updateProspect(id: string, data: Partial<Prospect>): Promise<void> {
@@ -68,8 +78,8 @@ export const prospectService = {
       (p) =>
         p.name.toLowerCase().includes(term) ||
         p.phone?.toLowerCase().includes(term) ||
-        p.address.street.toLowerCase().includes(term) ||
-        p.notes.toLowerCase().includes(term)
+        p.address?.street?.toLowerCase().includes(term) ||
+        (p.notes || '').toLowerCase().includes(term)
     );
   },
 };

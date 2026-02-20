@@ -26,13 +26,14 @@ export interface AuthSession {
 export type DayType = 'saturday' | 'sunday';
 export type InterestLevel = 'very' | 'somewhat' | 'neutral';
 export type PersonStatus = 'active' | 'converted' | 'inactive';
+export type Gender = 'male' | 'female';
 
 export interface Address {
-  street: string;
+  street?: string;
   apt?: string;
-  city: string;
-  state: string;
-  zip: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   lat?: number;
   lng?: number;
 }
@@ -40,12 +41,13 @@ export interface Address {
 export interface Prospect {
   id: string;
   name: string;
+  gender?: Gender;
   phone?: string;
   email?: string;
   address: Address;
   date_contacted: string;
   interest_level: InterestLevel;
-  notes: string;
+  notes?: string;
   status: PersonStatus;
   day_type: DayType;
   bus_route: string;
@@ -62,6 +64,7 @@ export interface VisitLog {
 export interface Rider {
   id: string;
   name: string;
+  gender?: Gender;
   phone?: string;
   email?: string;
   address: Address;
@@ -73,7 +76,7 @@ export interface Rider {
   visit_history: VisitLog[];
   last_visited?: string;
   last_rode?: string;
-  notes: string;
+  notes?: string;
   status: PersonStatus;
   birthday?: string; // YYYY-MM-DD
   points: number;
@@ -100,6 +103,7 @@ export interface AttendanceLog {
 export interface Worker {
   id: string;
   name: string;
+  gender?: Gender;
   phone?: string;
   email?: string;
   assigned_section: string;

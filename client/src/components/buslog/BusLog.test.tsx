@@ -76,11 +76,13 @@ describe('BusLog Component', () => {
       date: '2026-01-01',
       bus_route: 'Route 1',
       attendance: {
-        'r1': { name: 'Rider One', type: 'rider', morning: false, evening: false },
-        'w1': { name: 'Worker One', type: 'worker', morning: true, evening: true }
+        'r1': { name: 'Rider One', type: 'rider', morning: false, afternoon: false, evening: false, night: false },
+        'w1': { name: 'Worker One', type: 'worker', morning: true, afternoon: true, evening: true, night: true }
       },
       morning_count: 5,
+      afternoon_count: 4,
       evening_count: 3,
+      night_count: 2,
       created_by: 'Test',
       updated_at: new Date().toISOString()
     });
@@ -90,11 +92,13 @@ describe('BusLog Component', () => {
       date: '2026-01-01',
       bus_route: 'Route 1',
       attendance: {
-        'r1': { name: 'Rider One', type: 'rider', morning: true, evening: false },
-        'w1': { name: 'Worker One', type: 'worker', morning: true, evening: true }
+        'r1': { name: 'Rider One', type: 'rider', morning: true, afternoon: false, evening: false, night: false },
+        'w1': { name: 'Worker One', type: 'worker', morning: true, afternoon: true, evening: true, night: true }
       },
       morning_count: 6,
+      afternoon_count: 4,
       evening_count: 3,
+      night_count: 2,
       created_by: 'Test',
       updated_at: new Date().toISOString()
     });
@@ -135,7 +139,7 @@ describe('BusLog Component', () => {
     // Find morning toggle for Rider One (Sun icon)
     // We can find by aria-label if we added it, or by class/test-id. 
     // ShiftToggle has `aria-label="Morning shift"`
-    const toggles = screen.getAllByLabelText('Morning shift');
+    const toggles = screen.getAllByLabelText('Morning (To Church) shift');
     const riderToggle = toggles[0]; // Assuming order follows rendering
 
     fireEvent.click(riderToggle);

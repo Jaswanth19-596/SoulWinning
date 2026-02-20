@@ -11,7 +11,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { riderService } from '../../services/riderService';
 import { Rider } from '../../types';
 import { Button } from '../ui/button';
@@ -28,7 +27,6 @@ const RiderList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const { session } = useAuth();
-  const { dayType } = useApp();
   const navigate = useNavigate();
 
   const loadRiders = useCallback(async () => {
@@ -36,7 +34,7 @@ const RiderList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await riderService.getRiders(session.bus_route, dayType);
+      const data = await riderService.getRiders(session.bus_route, 'sunday');
       setRiders(data || []);
       setFiltered(data || []);
     } catch (err: any) {
@@ -44,7 +42,7 @@ const RiderList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [session, dayType]);
+  }, [session]);
 
   useEffect(() => {
     loadRiders();
@@ -58,7 +56,7 @@ const RiderList: React.FC = () => {
         (r) =>
           r.name.toLowerCase().includes(term) ||
           r.phone?.toLowerCase().includes(term) ||
-          r.address.street.toLowerCase().includes(term)
+          r.address?.street?.toLowerCase().includes(term)
       );
     }
     setFiltered(result);
@@ -82,7 +80,7 @@ const RiderList: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">
-            {dayType === 'saturday' ? '🏃' : '🚌'} Riders
+            🚌 Riders
           </h2>
           <p className="text-sm text-muted-foreground">
             {filtered.length} riders

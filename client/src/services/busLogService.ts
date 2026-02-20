@@ -16,12 +16,16 @@ import { riderService } from './riderService';
 import { workerService } from './workerService';
 import { prospectService } from './prospectService';
 
+export type RidePeriod = 'morning' | 'afternoon' | 'evening' | 'night';
+
 export interface AttendeeRecord {
   name: string;
   type: 'worker' | 'rider' | 'prospect';
   source?: 'prospect' | 'manual';
   morning: boolean;
+  afternoon: boolean;
   evening: boolean;
+  night: boolean;
 }
 
 export interface BusLog {
@@ -30,7 +34,9 @@ export interface BusLog {
   bus_route: string;
   attendance: Record<string, AttendeeRecord>;
   morning_count: number;
+  afternoon_count: number;
   evening_count: number;
+  night_count: number;
   created_by: string;
   updated_at: string;
 }
@@ -70,15 +76,36 @@ export const busLogService = {
     if (snap.exists()) {
       const log = { id: snap.id, ...snap.data() } as BusLog;
       
+      // Migrate old logs that only had morning/evening
+      let needsMigration = false;
+      Object.values(log.attendance).forEach(record => {
+        if ((record as any).afternoon === undefined) {
+          (record as any).afternoon = false;
+          needsMigration = true;
+        }
+        if ((record as any).night === undefined) {
+          (record as any).night = false;
+          needsMigration = true;
+        }
+      });
+      if (log.afternoon_count === undefined) {
+        log.afternoon_count = 0;
+        needsMigration = true;
+      }
+      if (log.night_count === undefined) {
+        log.night_count = 0;
+        needsMigration = true;
+      }
+
       // Check for attendees missing from this log
-      let changed = false;
+      let changed = needsMigration;
       const attendance = { ...log.attendance };
       
       allAttendees.forEach(p => {
         const existing = attendance[p.id];
         if (!existing) {
           // Add new person
-          attendance[p.id] = { name: p.name, type: p.type, morning: false, evening: false };
+          attendance[p.id] = { name: p.name, type: p.type, morning: false, afternoon: false, evening: false, night: false };
           changed = true;
         } else if (existing.type !== p.type || (p.type === 'rider' && p.source !== existing.source)) {
           // Fix missing/incorrect type or source
@@ -104,7 +131,11 @@ export const busLogService = {
       });
 
       if (changed) {
-        await updateDoc(docRef, { attendance });
+        await updateDoc(docRef, { 
+          attendance,
+          afternoon_count: log.afternoon_count,
+          night_count: log.night_count,
+        });
         log.attendance = attendance;
       }
       
@@ -118,7 +149,9 @@ export const busLogService = {
         name: p.name,
         type: p.type,
         morning: false,
+        afternoon: false,
         evening: false,
+        night: false,
       };
     });
 
@@ -127,7 +160,9 @@ export const busLogService = {
       bus_route: busRoute,
       attendance,
       morning_count: 0,
+      afternoon_count: 0,
       evening_count: 0,
+      night_count: 0,
       created_by: createdBy,
       updated_at: new Date().toISOString(),
     };
@@ -137,13 +172,13 @@ export const busLogService = {
   },
 
   /**
-   * Toggle an attendee's presence for morning or evening.
+   * Toggle an attendee's presence for a ride period.
    */
   async toggleAttendance(
     date: string,
     busRoute: string,
     personId: string,
-    period: 'morning' | 'evening'
+    period: RidePeriod
   ): Promise<BusLog> {
     const docId = makeDocId(date, busRoute);
     const docRef = doc(db, 'bus_logs', docId);
@@ -163,13 +198,17 @@ export const busLogService = {
     // Recount
     const entries = Object.values(data.attendance);
     data.morning_count = entries.filter((a) => a.morning).length;
+    data.afternoon_count = entries.filter((a) => (a as AttendeeRecord).afternoon).length;
     data.evening_count = entries.filter((a) => a.evening).length;
+    data.night_count = entries.filter((a) => (a as AttendeeRecord).night).length;
     data.updated_at = new Date().toISOString();
 
     await updateDoc(docRef, {
       attendance: data.attendance,
       morning_count: data.morning_count,
+      afternoon_count: data.afternoon_count,
       evening_count: data.evening_count,
+      night_count: data.night_count,
       updated_at: data.updated_at,
     });
 

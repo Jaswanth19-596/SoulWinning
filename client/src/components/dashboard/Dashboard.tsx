@@ -11,7 +11,6 @@ import {
   Download,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { prospectService } from '../../services/prospectService';
 import { riderService } from '../../services/riderService';
 import { workerService } from '../../services/workerService';
@@ -21,7 +20,6 @@ import { Button } from '../ui/button';
 
 const Dashboard: React.FC = () => {
   const { session } = useAuth();
-  const { dayType } = useApp();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,9 +31,9 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true);
         const [prospects, riders, workers] = await Promise.all([
-          prospectService.getProspects(session.bus_route, dayType),
-          riderService.getRiders(session.bus_route, dayType),
-          workerService.getWorkers(session.bus_route, dayType),
+          prospectService.getProspects(session.bus_route, 'sunday'),
+          riderService.getRiders(session.bus_route, 'sunday'),
+          workerService.getWorkers(session.bus_route, 'sunday'),
         ]);
 
         const visitedToday = riders.filter((r) =>
@@ -62,15 +60,15 @@ const Dashboard: React.FC = () => {
     };
 
     loadStats();
-  }, [session, dayType, today]);
+  }, [session, today]);
 
   const handleExportCSV = async () => {
     if (!session) return;
     try {
       const [prospects, riders, workers] = await Promise.all([
-        prospectService.getProspects(session.bus_route, dayType),
-        riderService.getRiders(session.bus_route, dayType),
-        workerService.getWorkers(session.bus_route, dayType),
+        prospectService.getProspects(session.bus_route, 'sunday'),
+        riderService.getRiders(session.bus_route, 'sunday'),
+        workerService.getWorkers(session.bus_route, 'sunday'),
       ]);
 
       // Build CSV
@@ -92,7 +90,7 @@ const Dashboard: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${dayType}_route_${session.bus_route}_${today}.csv`;
+      a.download = `route_${session.bus_route}_${today}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -122,7 +120,7 @@ const Dashboard: React.FC = () => {
       color: 'from-purple-500 to-violet-500',
     },
     {
-      label: dayType === 'saturday' ? 'Visited Today' : 'Rode Today',
+      label: 'Visited Today',
       value: stats?.visited_today || 0,
       icon: Check,
       color: 'from-green-500 to-emerald-500',
@@ -143,7 +141,7 @@ const Dashboard: React.FC = () => {
             <Bus className="w-6 h-6" /> Dashboard
           </h2>
           <p className="text-sm text-muted-foreground">
-            {dayType === 'saturday' ? 'Saturday Soul Winning' : 'Sunday Bus Ministry'} · {session?.bus_route}
+            Bus Ministry · {session?.bus_route}
           </p>
         </div>
         <div className="flex items-center gap-2">

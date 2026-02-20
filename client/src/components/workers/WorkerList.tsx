@@ -8,7 +8,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { workerService } from '../../services/workerService';
 import { Worker } from '../../types';
 import { Button } from '../ui/button';
@@ -25,7 +24,6 @@ const WorkerList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const { session } = useAuth();
-  const { dayType } = useApp();
   const navigate = useNavigate();
 
   const loadWorkers = useCallback(async () => {
@@ -33,7 +31,7 @@ const WorkerList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await workerService.getWorkers(session.bus_route, dayType);
+      const data = await workerService.getWorkers(session.bus_route, 'sunday');
       setWorkers(data);
       setFiltered(data);
     } catch (err: any) {
@@ -41,7 +39,7 @@ const WorkerList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [session, dayType]);
+  }, [session]);
 
   useEffect(() => {
     loadWorkers();

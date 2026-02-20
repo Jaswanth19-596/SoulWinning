@@ -10,7 +10,6 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { prospectService } from '../../services/prospectService';
 import { Prospect, InterestLevel } from '../../types';
 import { Button } from '../ui/button';
@@ -40,7 +39,6 @@ const ProspectList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterInterest, setFilterInterest] = useState<InterestLevel | ''>('');
   const { session } = useAuth();
-  const { dayType } = useApp();
   const navigate = useNavigate();
 
   const loadProspects = useCallback(async () => {
@@ -48,7 +46,7 @@ const ProspectList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await prospectService.getProspects(session.bus_route, dayType);
+      const data = await prospectService.getProspects(session.bus_route, 'sunday');
       setProspects(data);
       setFiltered(data);
     } catch (err: any) {
@@ -56,7 +54,7 @@ const ProspectList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [session, dayType]);
+  }, [session]);
 
   useEffect(() => {
     loadProspects();
@@ -70,7 +68,7 @@ const ProspectList: React.FC = () => {
         (p) =>
           p.name.toLowerCase().includes(term) ||
           p.phone?.toLowerCase().includes(term) ||
-          p.address.street.toLowerCase().includes(term)
+          p.address?.street?.toLowerCase().includes(term)
       );
     }
     if (filterInterest) {
@@ -98,10 +96,10 @@ const ProspectList: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">
-            {dayType === 'saturday' ? '🚪' : '⛪'} Prospects
+            ⛪ Prospects
           </h2>
           <p className="text-sm text-muted-foreground">
-            {filtered.length} people · {dayType === 'saturday' ? 'Soul Winning' : 'Sunday Outreach'}
+            {filtered.length} people
           </p>
         </div>
         <Button
@@ -142,7 +140,7 @@ const ProspectList: React.FC = () => {
           <div className="text-4xl mb-3">🔍</div>
           <h3 className="font-semibold text-lg">No Prospects Yet</h3>
           <p className="text-muted-foreground mt-1">
-            Start adding people you meet during {dayType === 'saturday' ? 'soul winning' : 'Sunday outreach'}
+            Start adding people you meet during outreach
           </p>
           <Button onClick={() => navigate('/prospects/new')} className="mt-4">
             <Plus className="w-4 h-4 mr-1" /> Add First Prospect

@@ -3,22 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Save, User, Phone, Mail, MapPin, Star, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { prospectService } from '../../services/prospectService';
-import { CreateProspectData, InterestLevel, Address } from '../../types';
+import { CreateProspectData, InterestLevel, Address, Gender } from '../../types';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import AddressAutocomplete from '../ui/AddressAutocomplete';
 
 const ProspectForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { session } = useAuth();
-  const { dayType } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<Gender | ''>('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [street, setStreet] = useState('');
@@ -33,15 +33,16 @@ const ProspectForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
     if (isEdit && id) {
       prospectService.getProspect(id).then((p) => {
         setName(p.name);
+        setGender((p as any).gender || '');
         setPhone(p.phone || '');
         setEmail(p.email || '');
-        setStreet(p.address.street);
+        setStreet(p.address.street || '');
         setApt(p.address.apt || '');
-        setCity(p.address.city);
-        setState(p.address.state);
-        setZip(p.address.zip);
+        setCity(p.address.city || '');
+        setState(p.address.state || '');
+        setZip(p.address.zip || '');
         setInterestLevel(p.interest_level);
-        setNotes(p.notes);
+        setNotes(p.notes || '');
       });
     }
   }, [isEdit, id]);
@@ -58,17 +59,24 @@ const ProspectForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
       setLoading(true);
       setError('');
 
-      const address: Address = { street, apt, city, state, zip };
+      const address: Address = { 
+        street: street.trim() || undefined, 
+        apt: apt.trim() || undefined, 
+        city: city.trim() || undefined, 
+        state: state.trim() || undefined, 
+        zip: zip.trim() || undefined, 
+      };
       const data: CreateProspectData = {
         name: name.trim(),
+        gender: gender || undefined,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
         address,
         date_contacted: new Date().toISOString().split('T')[0],
         interest_level: interestLevel,
-        notes: notes.trim(),
+        notes: notes.trim() || undefined,
         status: 'active',
-        day_type: dayType,
+        day_type: 'sunday',
         bus_route: session.bus_route,
       };
 
@@ -114,6 +122,29 @@ const ProspectForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" required />
             </div>
 
+            {/* Gender Section */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-1">👤 Gender</label>
+              <div className="flex gap-2">
+                {(['male', 'female'] as Gender[]).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(gender === g ? '' : g)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${
+                      gender === g
+                        ? g === 'male'
+                          ? 'bg-blue-500/10 border-blue-500 text-blue-600'
+                          : 'bg-pink-500/10 border-pink-500 text-pink-600'
+                        : 'border-input hover:border-primary/30'
+                    }`}
+                  >
+                    {g === 'male' ? '👨 Male' : '👩 Female'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-1">
@@ -133,7 +164,17 @@ const ProspectForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
               <label className="text-sm font-medium flex items-center gap-1">
                 <MapPin className="w-4 h-4" /> Address
               </label>
-              <Input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street address" />
+              <AddressAutocomplete
+                value={street}
+                onChange={setStreet}
+                onSelect={(addr) => {
+                  setStreet(addr.street);
+                  setCity(addr.city);
+                  setState(addr.state);
+                  setZip(addr.zip);
+                }}
+                placeholder="Start typing an address..."
+              />
               <div className="grid grid-cols-4 gap-2">
                 <Input value={apt} onChange={(e) => setApt(e.target.value)} placeholder="Apt" />
                 <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="col-span-1" />

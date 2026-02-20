@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Bus,
-  Sun,
-  CalendarDays,
   LogOut,
   Users,
   UserPlus,
@@ -12,6 +10,7 @@ import {
   BarChart3,
   Shield,
   ClipboardList,
+  CalendarCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
@@ -19,22 +18,19 @@ import { Button } from '../ui/button';
 
 const Header: React.FC = () => {
   const { session, isAuthenticated, isCaptain, logout } = useAuth();
-  const { dayType, setDayType, section, setSection } = useApp();
+  const { section, setSection } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!isAuthenticated) return null;
 
-  const baseSections = [
+  const sections = [
     { key: 'prospects' as const, label: 'Prospects', icon: UserPlus },
     { key: 'riders' as const, label: 'Riders', icon: Users },
     { key: 'workers' as const, label: 'Workers', icon: Briefcase },
+    { key: 'satvisit' as const, label: 'Sat Visit', icon: CalendarCheck },
+    { key: 'buslog' as const, label: 'Sun Bus', icon: ClipboardList },
   ];
-
-  // Bus Log tab only on Sunday for captains
-  const sections = dayType === 'sunday'
-    ? [...baseSections, { key: 'buslog' as const, label: 'Bus Log', icon: ClipboardList }]
-    : baseSections;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -76,61 +72,15 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Day Toggle */}
-      <div className="container mx-auto px-4 pb-2">
-        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit mx-auto">
-          <button
-            onClick={() => setDayType('saturday')}
-            className={`relative px-5 py-2 rounded-md text-sm font-medium transition-all ${
-              dayType === 'saturday'
-                ? 'text-white'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {dayType === 'saturday' && (
-              <motion.div
-                layoutId="dayToggle"
-                className="absolute inset-0 bg-gradient-to-r from-orange-500 to-amber-500 rounded-md"
-                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-            <span className="relative flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              Saturday
-            </span>
-          </button>
-          <button
-            onClick={() => setDayType('sunday')}
-            className={`relative px-5 py-2 rounded-md text-sm font-medium transition-all ${
-              dayType === 'sunday'
-                ? 'text-white'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {dayType === 'sunday' && (
-              <motion.div
-                layoutId="dayToggle"
-                className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-md"
-                transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-            <span className="relative flex items-center gap-2">
-              <Sun className="w-4 h-4" />
-              Sunday
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Section Navigation */}
+      {/* Section Navigation — 5 tabs */}
       {location.pathname === '/' && (
         <div className="container mx-auto px-4 pb-2">
-          <div className="flex gap-1 justify-center">
+          <div className="flex gap-0.5 justify-center overflow-x-auto scrollbar-hide">
             {sections.map((s) => (
               <button
                 key={s.key}
                 onClick={() => setSection(s.key)}
-                className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`relative px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                   section === s.key
                     ? 'text-primary'
                     : 'text-muted-foreground hover:text-foreground'

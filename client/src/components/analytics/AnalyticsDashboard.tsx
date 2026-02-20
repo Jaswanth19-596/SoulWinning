@@ -51,8 +51,10 @@ const AnalyticsDashboard: React.FC = () => {
           const chartData = logs.map((log: any) => ({
              date: log.date.slice(5), // MM-DD
              Morning: log.morning_count || 0,
+             Afternoon: log.afternoon_count || 0,
              Evening: log.evening_count || 0,
-             Total: (log.morning_count || 0) + (log.evening_count || 0)
+             Night: log.night_count || 0,
+             Total: (log.morning_count || 0) + (log.afternoon_count || 0) + (log.evening_count || 0) + (log.night_count || 0)
           }));
 
           setStats({
@@ -118,7 +120,9 @@ const AnalyticsDashboard: React.FC = () => {
                     cursor={{fill: 'transparent'}}
                   />
                   <Bar dataKey="Morning" fill="#f59e0b" radius={[4, 4, 0, 0]} stackId="a" />
+                  <Bar dataKey="Afternoon" fill="#f97316" radius={[4, 4, 0, 0]} stackId="a" />
                   <Bar dataKey="Evening" fill="#6366f1" radius={[4, 4, 0, 0]} stackId="a" />
+                  <Bar dataKey="Night" fill="#8b5cf6" radius={[4, 4, 0, 0]} stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

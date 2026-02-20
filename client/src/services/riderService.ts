@@ -33,7 +33,7 @@ export const riderService = {
 
   async createRider(data: CreateRiderData): Promise<Rider> {
     const now = new Date().toISOString();
-    const riderData = {
+    const riderData: Record<string, any> = {
       ...data,
       visit_history: [],
       points: 0,
@@ -41,6 +41,15 @@ export const riderService = {
       created_at: now,
       updated_at: now,
     };
+    // Strip undefined values — Firestore rejects them
+    Object.keys(riderData).forEach(key => {
+      if (riderData[key] === undefined) delete riderData[key];
+      if (key === 'address' && typeof riderData[key] === 'object') {
+        Object.keys(riderData[key]).forEach(k => {
+          if (riderData[key][k] === undefined) delete riderData[key][k];
+        });
+      }
+    });
     const docRef = await addDoc(collection(db, 'riders'), riderData);
     return { id: docRef.id, ...riderData } as Rider;
   },
@@ -131,7 +140,7 @@ export const riderService = {
       (r) =>
         r.name.toLowerCase().includes(term) ||
         r.phone?.toLowerCase().includes(term) ||
-        r.address.street.toLowerCase().includes(term)
+        r.address?.street?.toLowerCase().includes(term)
     );
   },
 };

@@ -33,12 +33,16 @@ export const workerService = {
 
   async createWorker(data: CreateWorkerData): Promise<Worker> {
     const now = new Date().toISOString();
-    const workerData = {
+    const workerData: Record<string, any> = {
       ...data,
       attendance_log: [],
       created_at: now,
       updated_at: now,
     };
+    // Strip undefined values — Firestore rejects them
+    Object.keys(workerData).forEach(key => {
+      if (workerData[key] === undefined) delete workerData[key];
+    });
     const docRef = await addDoc(collection(db, 'workers'), workerData);
     return { id: docRef.id, ...workerData } as Worker;
   },

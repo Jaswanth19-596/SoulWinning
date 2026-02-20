@@ -3,9 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Save, User, Phone, Mail, Briefcase } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { workerService } from '../../services/workerService';
-import { CreateWorkerData } from '../../types';
+import { CreateWorkerData, Gender } from '../../types';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -14,11 +13,11 @@ const WorkerForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { session } = useAuth();
-  const { dayType } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<Gender | ''>('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [assignedSection, setAssignedSection] = useState('');
@@ -28,6 +27,7 @@ const WorkerForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
     if (isEdit && id) {
       workerService.getWorker(id).then((w) => {
         setName(w.name);
+        setGender((w as any).gender || '');
         setPhone(w.phone || '');
         setEmail(w.email || '');
         setAssignedSection(w.assigned_section);
@@ -47,11 +47,12 @@ const WorkerForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
 
       const data: CreateWorkerData = {
         name: name.trim(),
+        gender: gender || undefined,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
         assigned_section: assignedSection.trim() || 'General',
         bus_route: session.bus_route,
-        day_type: dayType,
+        day_type: 'sunday',
         birthday: birthday || undefined,
         status: 'active',
       };
@@ -84,6 +85,29 @@ const WorkerForm: React.FC<{ isEdit?: boolean }> = ({ isEdit }) => {
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-1"><User className="w-4 h-4" /> Name *</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" required />
+            </div>
+
+            {/* Gender Section */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-1">👤 Gender</label>
+              <div className="flex gap-2">
+                {(['male', 'female'] as Gender[]).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(gender === g ? '' : g)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition-all ${
+                      gender === g
+                        ? g === 'male'
+                          ? 'bg-blue-500/10 border-blue-500 text-blue-600'
+                          : 'bg-pink-500/10 border-pink-500 text-pink-600'
+                        : 'border-input hover:border-primary/30'
+                    }`}
+                  >
+                    {g === 'male' ? '👨 Male' : '👩 Female'}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

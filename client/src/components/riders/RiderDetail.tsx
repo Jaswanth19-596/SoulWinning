@@ -15,7 +15,6 @@ import {
   Clock,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { riderService } from '../../services/riderService';
 import { Rider } from '../../types';
 import { Button } from '../ui/button';
@@ -28,7 +27,6 @@ const RiderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isCaptain } = useAuth();
-  const { dayType } = useApp();
   const [rider, setRider] = useState<Rider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,11 +56,7 @@ const RiderDetail: React.FC = () => {
   const handleToggle = async () => {
     if (!id) return;
     try {
-      if (dayType === 'saturday') {
-        await riderService.logVisit(id);
-      } else {
-        await riderService.logRide(id);
-      }
+      await riderService.logVisit(id);
       await loadRider();
     } catch (err) {
       console.error(err);
@@ -128,12 +122,8 @@ const RiderDetail: React.FC = () => {
           >
             <Check className="w-4 h-4 mr-2" />
             {isVisitedToday
-              ? dayType === 'saturday'
-                ? '✅ Visited Today — Tap to Undo'
-                : '✅ Rode Today — Tap to Undo'
-              : dayType === 'saturday'
-              ? 'Mark as Visited Today'
-              : 'Mark as Rode Today'}
+              ? '✅ Visited Today — Tap to Undo'
+              : 'Mark as Visited Today'}
           </Button>
 
           {/* Quick Actions */}

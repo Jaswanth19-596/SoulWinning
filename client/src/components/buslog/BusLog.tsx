@@ -6,15 +6,16 @@ import {
   ChevronRight,
   Calendar,
   Sun,
+  Sunset,
   Moon,
+  MoonStar,
   Users,
   Cake,
   AlertCircle,
   MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
-import { busLogService, BusLog } from '../../services/busLogService';
+import { busLogService, BusLog, RidePeriod } from '../../services/busLogService';
 import { riderService } from '../../services/riderService';
 import { workerService } from '../../services/workerService';
 import { prospectService } from '../../services/prospectService';
@@ -32,11 +33,8 @@ const isBirthdayNear = (dateStr?: string) => {
     if (!dateStr) return false;
     const bday = new Date(dateStr);
     const today = new Date();
-    // Ignore year, compare month/day
-    // Simple logic: Create a date for this year's birthday
     const thisYearBday = new Date(today.getFullYear(), bday.getUTCMonth(), bday.getUTCDate());
     
-    // If passed already this week, check next year? No, just upcoming.
     const diffTime = thisYearBday.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -45,7 +43,7 @@ const isBirthdayNear = (dateStr?: string) => {
 
 // Helper for Retention Risk (> 21 days since last rode)
 const isAtRisk = (lastRode?: string) => {
-    if (!lastRode) return true; // Never rode? Maybe risk.
+    if (!lastRode) return true;
     const last = new Date(lastRode);
     const today = new Date();
     const diffTime = today.getTime() - last.getTime();
@@ -55,7 +53,6 @@ const isAtRisk = (lastRode?: string) => {
 
 const BusLogView: React.FC = () => {
   const { session } = useAuth();
-  // dayType removed
   const [log, setLog] = useState<BusLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +70,7 @@ const BusLogView: React.FC = () => {
     last_rode?: string;
     phone?: string;
     points?: number;
-    address?: { street: string; city: string; state: string; zip: string; lat?: number; lng?: number };
+    address?: { street?: string; city?: string; state?: string; zip?: string; lat?: number; lng?: number };
   }>>({});
   
   const isToday = selectedDate === new Date().toISOString().split('T')[0];
@@ -97,7 +94,7 @@ const BusLogView: React.FC = () => {
             last_rode?: string; 
             phone?: string;
             points?: number;
-            address?: { street: string; city: string; state: string; zip: string; lat?: number; lng?: number };
+            address?: { street?: string; city?: string; state?: string; zip?: string; lat?: number; lng?: number };
         }> = {};
         
         riders.forEach(r => { 
@@ -116,8 +113,6 @@ const BusLogView: React.FC = () => {
                 name: w.name, 
                 birthday: w.birthday,
                 phone: w.phone,
-                // Workers might not have address in type definition? Let's check. 
-                // Worker type doesn't have address in my memory. Let's assume passed if exists or ignore.
             }; 
         });
         prospects.forEach(p => { 
@@ -161,12 +156,10 @@ const BusLogView: React.FC = () => {
     loadLog();
   }, [loadLog]);
 
-  const handleToggle = async (riderId: string, period: 'morning' | 'evening') => {
+  const handleToggle = async (riderId: string, period: RidePeriod) => {
     if (!session) return;
     try {
       // 1. Optimistic UI Update for Points (if Rider)
-      // We need to know the *next* state to decide +10 or -10.
-      // Current state is in `log`.
       const currentPerson = log?.attendance[riderId];
       if (currentPerson && currentPerson.type === 'rider') {
          const willBePresent = !currentPerson[period];
@@ -195,9 +188,6 @@ const BusLogView: React.FC = () => {
       setLog(updated);
     } catch (err) {
       console.error('Toggle error:', err);
-      // Revert optimistic update if needed? 
-      // For MVP, just refreshing or letting next load fix it is acceptable, 
-      // but ideally we'd roll back. Not strictly required for this fix request.
     }
   };
 
@@ -216,12 +206,14 @@ interface EnhancedAttendee {
   type: 'worker' | 'rider' | 'prospect';
   source?: 'prospect' | 'manual';
   morning: boolean;
+  afternoon: boolean;
   evening: boolean;
+  night: boolean;
   birthday?: string;
   last_rode?: string;
   phone?: string;
   points?: number;
-  address?: { street: string; city: string; state: string; zip: string; lat?: number; lng?: number };
+  address?: { street?: string; city?: string; state?: string; zip?: string; lat?: number; lng?: number };
 }
 
   // Hydrate attendees
@@ -252,26 +244,21 @@ interface EnhancedAttendee {
   const [showMap, setShowMap] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Mock Geocoding Logic (Deterministic based on name/id)
-
-  // In production, real lat/lng should be stored in DB.
   const mapLocations = useMemo(() => {
      if (!showMap) return [];
-     const centerLat = 41.6; // Hammond/Chicago roughly
+     const centerLat = 41.6;
      const centerLng = -87.5;
      
      return attendees
-        .filter(p => p.address) // Only map if address exists
+        .filter(p => p.address)
         .map((p, i) => {
-           // Create a pseudo-random offset based on index to spread them out
-           // This is just for visualization without real geodata
            const offsetLat = (Math.sin(i + 1) * 0.05); 
            const offsetLng = (Math.cos(i + 1) * 0.05);
            
            return {
                id: p.id,
                name: p.name,
-               address: `${p.address?.street}, ${p.address?.city}`,
+               address: `${p.address?.street || ''}, ${p.address?.city || ''}`,
                lat: p.address?.lat || (centerLat + offsetLat),
                lng: p.address?.lng || (centerLng + offsetLng),
                status: p.type
@@ -312,15 +299,14 @@ interface EnhancedAttendee {
                 key={person.id}
                 className="group flex items-center justify-between px-4 py-3 hover:bg-muted/20 transition-colors duration-150 rounded-lg"
               >
-                <div className="flex-1 min-w-0 pr-4">
+                <div className="flex-1 min-w-0 pr-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-medium text-foreground truncate">
+                    <span className="text-sm font-medium text-foreground truncate">
                       {person.name}
                     </span>
                     {person.source === 'prospect' && (
                       <span className="w-2 h-2 rounded-full bg-green-500" title="Prospect" />
                     )}
-                    {/* Icons */}
                     {bdayNear && (
                       <span title="Birthday coming up!">
                         <Cake size={14} className="text-pink-500 animate-pulse" />
@@ -331,8 +317,6 @@ interface EnhancedAttendee {
                         <AlertCircle size={14} className="text-red-500" />
                       </span>
                     )}
-
-                    {/* Points Badge */}
                     {person.points ? (
                       <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full ml-1">
                         <Star size={8} fill="currentColor" /> {person.points}
@@ -343,8 +327,6 @@ interface EnhancedAttendee {
                   {/* Subtext with Actions */}
                   <div className="flex items-center gap-3">
                      {risk && <span className="text-[10px] text-red-500 font-medium">Missed 3+ Weeks</span>}
-
-                     {/* Quick Text Button */}
                      {person.phone && (
                        <button 
                          onClick={() => handleQuickText(person.phone, person.name)}
@@ -357,7 +339,8 @@ interface EnhancedAttendee {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* 4 Ride Period Toggles */}
+                <div className="flex items-center gap-1.5">
                   <ShiftToggle 
                     type="morning" 
                     active={person.morning} 
@@ -365,9 +348,21 @@ interface EnhancedAttendee {
                     disabled={!isToday}
                   />
                   <ShiftToggle 
+                    type="afternoon" 
+                    active={person.afternoon} 
+                    onClick={() => handleToggle(person.id, 'afternoon')}
+                    disabled={!isToday}
+                  />
+                  <ShiftToggle 
                     type="evening" 
                     active={person.evening} 
                     onClick={() => handleToggle(person.id, 'evening')}
+                    disabled={!isToday}
+                  />
+                  <ShiftToggle 
+                    type="night" 
+                    active={person.night} 
+                    onClick={() => handleToggle(person.id, 'night')}
                     disabled={!isToday}
                   />
                 </div>
@@ -385,19 +380,29 @@ interface EnhancedAttendee {
   return (
     <div className="max-w-xl mx-auto space-y-6 pb-20">
       
-      {/* Date Navigation & Stats - Merged for standard look */}
+      {/* Date Navigation & Stats - 4 columns for 4 ride periods */}
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
          {/* Stats Row */}
-         <div className="grid grid-cols-2 border-b border-border">
-            <div className="p-4 flex flex-col items-center justify-center border-r border-border">
-               <Sun size={24} className={`mb-1 ${log?.morning_count ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
-               <span className="text-3xl font-bold">{log?.morning_count || 0}</span>
-               <span className="text-[10px] uppercase font-bold text-muted-foreground">Morning</span>
+         <div className="grid grid-cols-4 border-b border-border">
+            <div className="p-3 flex flex-col items-center justify-center border-r border-border">
+               <Sun size={20} className={`mb-1 ${log?.morning_count ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+               <span className="text-2xl font-bold">{log?.morning_count || 0}</span>
+               <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight text-center">Morning<br/><span className="text-[8px] font-normal opacity-70">To Church</span></span>
             </div>
-            <div className="p-4 flex flex-col items-center justify-center">
-               <Moon size={24} className={`mb-1 ${log?.evening_count ? 'text-indigo-500 fill-indigo-500' : 'text-muted-foreground'}`} />
-               <span className="text-3xl font-bold">{log?.evening_count || 0}</span>
-               <span className="text-[10px] uppercase font-bold text-muted-foreground">Evening</span>
+            <div className="p-3 flex flex-col items-center justify-center border-r border-border">
+               <Sunset size={20} className={`mb-1 ${log?.afternoon_count ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground'}`} />
+               <span className="text-2xl font-bold">{log?.afternoon_count || 0}</span>
+               <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight text-center">Afternoon<br/><span className="text-[8px] font-normal opacity-70">Back Home</span></span>
+            </div>
+            <div className="p-3 flex flex-col items-center justify-center border-r border-border">
+               <Moon size={20} className={`mb-1 ${log?.evening_count ? 'text-indigo-500 fill-indigo-500' : 'text-muted-foreground'}`} />
+               <span className="text-2xl font-bold">{log?.evening_count || 0}</span>
+               <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight text-center">Evening<br/><span className="text-[8px] font-normal opacity-70">To Church</span></span>
+            </div>
+            <div className="p-3 flex flex-col items-center justify-center">
+               <MoonStar size={20} className={`mb-1 ${log?.night_count ? 'text-violet-500 fill-violet-500' : 'text-muted-foreground'}`} />
+               <span className="text-2xl font-bold">{log?.night_count || 0}</span>
+               <span className="text-[9px] uppercase font-bold text-muted-foreground leading-tight text-center">Night<br/><span className="text-[8px] font-normal opacity-70">Back Home</span></span>
             </div>
          </div>
 

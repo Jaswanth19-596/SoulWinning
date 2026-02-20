@@ -1,11 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { DayType } from '../types';
 
-type SectionType = 'prospects' | 'riders' | 'workers' | 'buslog';
+type SectionType = 'prospects' | 'riders' | 'workers' | 'satvisit' | 'buslog';
 
 interface AppContextType {
-  dayType: DayType;
-  setDayType: (day: DayType) => void;
   section: SectionType;
   setSection: (section: SectionType) => void;
 }
@@ -13,11 +10,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [dayType, setDayType] = useState<DayType>('saturday');
   const [section, setSection] = useState<SectionType>('prospects');
 
   return (
-    <AppContext.Provider value={{ dayType, setDayType, section, setSection }}>
+    <AppContext.Provider value={{ section, setSection }}>
       {children}
     </AppContext.Provider>
   );

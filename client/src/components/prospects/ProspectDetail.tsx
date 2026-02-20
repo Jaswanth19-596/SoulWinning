@@ -13,7 +13,6 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useApp } from '../../contexts/AppContext';
 import { prospectService } from '../../services/prospectService';
 import { riderService } from '../../services/riderService';
 import { Prospect, InterestLevel } from '../../types';
@@ -66,6 +65,7 @@ const ProspectDetail: React.FC = () => {
       // Create a rider from this prospect
       await riderService.createRider({
         name: prospect.name,
+        gender: (prospect as any).gender,
         phone: prospect.phone,
         email: prospect.email,
         address: prospect.address,
