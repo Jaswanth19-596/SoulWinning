@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -15,12 +15,13 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { prospectService } from '../../services/prospectService';
 import { riderService } from '../../services/riderService';
-import { Prospect, InterestLevel } from '../../types';
+import { Prospect, InterestLevel, WeeklyNote } from '../../types';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import Loading from '../shared/Loading';
 import ErrorMessage from '../shared/ErrorMessage';
+import WeeklyNotes from '../shared/WeeklyNotes';
 
 const interestColors: Record<InterestLevel, string> = {
   very: 'bg-green-500/10 text-green-500',
@@ -62,7 +63,6 @@ const ProspectDetail: React.FC = () => {
     if (!prospect || !session) return;
     try {
       setConverting(true);
-      // Create a rider from this prospect
       await riderService.createRider({
         name: prospect.name,
         gender: (prospect as any).gender,
@@ -70,12 +70,11 @@ const ProspectDetail: React.FC = () => {
         email: prospect.email,
         address: prospect.address,
         bus_route: prospect.bus_route,
-        day_type: 'sunday', // Riders go to Sunday
+        day_type: 'sunday',
         source: 'prospect',
         notes: prospect.notes,
         status: 'active',
       });
-      // Mark prospect as converted
       await prospectService.updateProspect(prospect.id, { status: 'converted' });
       setProspect({ ...prospect, status: 'converted' });
       alert('🎉 Prospect converted to Sunday Rider!');
@@ -96,6 +95,24 @@ const ProspectDetail: React.FC = () => {
       alert('Failed to delete: ' + err.message);
     }
   };
+
+  const handleAddNote = useCallback(async (text: string) => {
+    if (!id) return;
+    const note = await prospectService.addNote(id, text);
+    setProspect((prev) => prev ? {
+      ...prev,
+      weekly_notes: [...(prev.weekly_notes || []), note],
+    } : prev);
+  }, [id]);
+
+  const handleDeleteNote = useCallback(async (noteId: string) => {
+    if (!id) return;
+    await prospectService.deleteNote(id, noteId);
+    setProspect((prev) => prev ? {
+      ...prev,
+      weekly_notes: (prev.weekly_notes || []).filter((n) => n.id !== noteId),
+    } : prev);
+  }, [id]);
 
   if (loading) return <Loading />;
   if (error) return <ErrorMessage message={error} />;
@@ -202,13 +219,20 @@ const ProspectDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Initial Notes */}
           {prospect.notes && (
             <div className="pt-2 border-t border-border">
               <h4 className="font-medium text-sm mb-1">Notes</h4>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{prospect.notes}</p>
             </div>
           )}
+
+          {/* Weekly Notes Timeline */}
+          <WeeklyNotes
+            notes={prospect.weekly_notes || []}
+            onAdd={handleAddNote}
+            onDelete={handleDeleteNote}
+          />
         </CardContent>
       </Card>
     </motion.div>
@@ -216,3 +240,4 @@ const ProspectDetail: React.FC = () => {
 };
 
 export default ProspectDetail;
+

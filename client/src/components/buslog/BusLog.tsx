@@ -24,7 +24,6 @@ import ErrorMessage from '../shared/ErrorMessage';
 import CustomCalendar from '../ui/CustomCalendar';
 import ShiftToggle from './ShiftToggle';
 import RouteMap from './RouteMap';
-import Leaderboard from './Leaderboard';
 import AnalyticsDashboard from '../analytics/AnalyticsDashboard';
 import { Map as MapIcon, Star, LayoutDashboard } from 'lucide-react';
 
@@ -156,26 +155,28 @@ const BusLogView: React.FC = () => {
     loadLog();
   }, [loadLog]);
 
-  const handleToggle = async (riderId: string, period: RidePeriod) => {
+  const handleToggle = useCallback(async (riderId: string, period: RidePeriod) => {
     if (!session) return;
     try {
       // 1. Optimistic UI Update for Points (if Rider)
       const currentPerson = log?.attendance[riderId];
       if (currentPerson && currentPerson.type === 'rider') {
+         // Only morning/evening earn points (30pts each), add-only (no deduction on cancel)
+         const scoringPeriods: RidePeriod[] = ['morning', 'evening'];
          const willBePresent = !currentPerson[period];
-         const pointChange = willBePresent ? 10 : -10;
-         
-         setMasterList(prev => {
-            const rider = prev[riderId];
-            if (!rider) return prev;
-            return {
-               ...prev,
-               [riderId]: {
-                  ...rider,
-                  points: (rider.points || 0) + pointChange
-               }
-            };
-         });
+         if (willBePresent && scoringPeriods.includes(period)) {
+           setMasterList(prev => {
+              const rider = prev[riderId];
+              if (!rider) return prev;
+              return {
+                 ...prev,
+                 [riderId]: {
+                    ...rider,
+                    points: (rider.points || 0) + 30
+                 }
+              };
+           });
+         }
       }
 
       // 2. Network Request
@@ -189,7 +190,7 @@ const BusLogView: React.FC = () => {
     } catch (err) {
       console.error('Toggle error:', err);
     }
-  };
+  }, [session, selectedDate, log]);
 
   const navigateDate = (days: number) => {
     const d = new Date(selectedDate);
@@ -485,8 +486,6 @@ interface EnhancedAttendee {
                 )}
             </AnimatePresence>
 
-            {/* Leaderboard - Only show if we have points */}
-            <Leaderboard riders={riders} />
 
             {/* Lists */}
             <div className="space-y-6">

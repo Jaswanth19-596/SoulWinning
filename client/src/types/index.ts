@@ -48,11 +48,19 @@ export interface Prospect {
   date_contacted: string;
   interest_level: InterestLevel;
   notes?: string;
+  weekly_notes?: WeeklyNote[];
   status: PersonStatus;
   day_type: DayType;
   bus_route: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface WeeklyNote {
+  id: string;
+  text: string;
+  date: string;       // YYYY-MM-DD
+  created_at: string;  // ISO timestamp
 }
 
 export interface VisitLog {
@@ -77,6 +85,7 @@ export interface Rider {
   last_visited?: string;
   last_rode?: string;
   notes?: string;
+  weekly_notes?: WeeklyNote[];
   status: PersonStatus;
   birthday?: string; // YYYY-MM-DD
   points: number;
@@ -129,4 +138,15 @@ export interface DashboardStats {
   visited_today: number;
   rode_today: number;
   workers_present: number;
+}
+
+// Prayer Requests
+export interface PrayerRequest {
+  id: string;
+  text: string;
+  requested_by: string;
+  bus_route: string;
+  resolved: boolean;
+  created_at: string;
+  resolved_at?: string;
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { AuthSession } from '../types';
 
@@ -18,7 +18,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session from localStorage
     const stored = authService.getSession();
     if (stored) {
       setSession(stored);
@@ -26,27 +25,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(false);
   }, []);
 
-  const login = async (code: string) => {
+  const login = useCallback(async (code: string) => {
     const newSession = await authService.login(code);
     setSession(newSession);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout();
     setSession(null);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    session,
+    loading,
+    isAuthenticated: !!session,
+    isCaptain: session?.role === 'captain',
+    login,
+    logout,
+  }), [session, loading, login, logout]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        loading,
-        isAuthenticated: !!session,
-        isCaptain: session?.role === 'captain',
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

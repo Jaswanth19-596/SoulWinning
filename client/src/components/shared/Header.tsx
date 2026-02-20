@@ -11,6 +11,8 @@ import {
   Shield,
   ClipboardList,
   CalendarCheck,
+  Trophy,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useApp } from '../../contexts/AppContext';
@@ -30,6 +32,8 @@ const Header: React.FC = () => {
     { key: 'workers' as const, label: 'Workers', icon: Briefcase },
     { key: 'satvisit' as const, label: 'Sat Visit', icon: CalendarCheck },
     { key: 'buslog' as const, label: 'Sun Bus', icon: ClipboardList },
+    { key: 'leaderboard' as const, label: 'Ranks', icon: Trophy },
+    { key: 'prayer' as const, label: 'Prayer', icon: Heart },
   ];
 
   return (

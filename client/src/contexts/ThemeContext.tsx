@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -26,7 +26,7 @@ export function ThemeProvider({
   storageKey = 'soul-winning-theme',
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
+  const [theme, setThemeState] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
 
@@ -48,13 +48,15 @@ export function ThemeProvider({
     root.classList.add(theme)
   }, [theme])
 
-  const value = {
+  const setTheme = useCallback((newTheme: Theme) => {
+    localStorage.setItem(storageKey, newTheme)
+    setThemeState(newTheme)
+  }, [storageKey])
+
+  const value = useMemo(() => ({
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
-  }
+    setTheme,
+  }), [theme, setTheme])
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

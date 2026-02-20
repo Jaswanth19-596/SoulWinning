@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -9,19 +9,19 @@ import {
   Mail,
   MapPin,
   Calendar,
-  Check,
   MessageSquare,
   AlertTriangle,
   Clock,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { riderService } from '../../services/riderService';
-import { Rider } from '../../types';
+import { Rider, WeeklyNote } from '../../types';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import Loading from '../shared/Loading';
 import ErrorMessage from '../shared/ErrorMessage';
+import WeeklyNotes from '../shared/WeeklyNotes';
 
 const RiderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +33,7 @@ const RiderDetail: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const loadRider = async () => {
+  const loadRider = useCallback(async () => {
     if (!id) return;
     try {
       const data = await riderService.getRider(id);
@@ -43,25 +43,12 @@ const RiderDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadRider();
   }, [loadRider]);
 
-  const isVisitedToday = rider
-    ? (rider.visit_history || []).some((v) => v.date === today)
-    : false;
-
-  const handleToggle = async () => {
-    if (!id) return;
-    try {
-      await riderService.logVisit(id);
-      await loadRider();
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleDelete = async () => {
     if (!rider || !id) return;
@@ -73,6 +60,24 @@ const RiderDetail: React.FC = () => {
       alert('Failed to delete: ' + err.message);
     }
   };
+
+  const handleAddNote = useCallback(async (text: string) => {
+    if (!id) return;
+    const note = await riderService.addNote(id, text);
+    setRider((prev) => prev ? {
+      ...prev,
+      weekly_notes: [...(prev.weekly_notes || []), note],
+    } : prev);
+  }, [id]);
+
+  const handleDeleteNote = useCallback(async (noteId: string) => {
+    if (!id) return;
+    await riderService.deleteNote(id, noteId);
+    setRider((prev) => prev ? {
+      ...prev,
+      weekly_notes: (prev.weekly_notes || []).filter((n) => n.id !== noteId),
+    } : prev);
+  }, [id]);
 
   const formatAddress = (addr: Rider['address']) => {
     return [addr.street, addr.apt, addr.city, addr.state, addr.zip].filter(Boolean).join(', ');
@@ -111,21 +116,6 @@ const RiderDetail: React.FC = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Today's Status Toggle */}
-          <Button
-            onClick={handleToggle}
-            className={`w-full ${
-              isVisitedToday
-                ? 'bg-green-500 hover:bg-green-600'
-                : 'bg-gradient-to-r from-primary to-purple-600'
-            } text-white`}
-          >
-            <Check className="w-4 h-4 mr-2" />
-            {isVisitedToday
-              ? '✅ Visited Today — Tap to Undo'
-              : 'Mark as Visited Today'}
-          </Button>
-
           {/* Quick Actions */}
           <div className="grid grid-cols-3 gap-2">
             {rider.phone && (
@@ -196,6 +186,13 @@ const RiderDetail: React.FC = () => {
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{rider.notes}</p>
             </div>
           )}
+
+          {/* Weekly Notes Timeline */}
+          <WeeklyNotes
+            notes={rider.weekly_notes || []}
+            onAdd={handleAddNote}
+            onDelete={handleDeleteNote}
+          />
         </CardContent>
       </Card>
     </motion.div>

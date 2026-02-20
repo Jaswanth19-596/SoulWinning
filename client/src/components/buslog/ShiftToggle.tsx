@@ -80,4 +80,4 @@ const ShiftToggle: React.FC<ShiftToggleProps> = ({ type, active, onClick, disabl
   );
 };
 
-export default ShiftToggle;
+export default React.memo(ShiftToggle);

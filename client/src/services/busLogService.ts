@@ -9,7 +9,8 @@ import {
   orderBy,
   updateDoc,
   increment,
-  arrayUnion
+  arrayUnion,
+  limit as firestoreLimit
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import { riderService } from './riderService';
@@ -223,22 +224,26 @@ export const busLogService = {
            updates.last_rode = date;
         }
 
-        // 2. Gamification: Award/Revoke Points
-        const pointAmount = isPresent ? 10 : -10;
-        const reason = isPresent ? `Ride (${period}) - ${date}` : `Ride Cancelled (${period}) - ${date}`;
-        
-        const newLogEntry = {
-            date: date,
-            amount: pointAmount,
-            reason: reason,
-            timestamp: new Date().toISOString()
-        };
+        // 2. Gamification: Points only for TO-CHURCH periods (morning/evening)
+        //    Only ADD points — never deduct on cancel
+        const scoringPeriods: RidePeriod[] = ['morning', 'evening'];
+        if (isPresent && scoringPeriods.includes(period)) {
+          const newLogEntry = {
+              date: date,
+              amount: 30,
+              reason: `Ride (${period}) - ${date}`,
+              timestamp: new Date().toISOString()
+          };
 
-        await updateDoc(riderRef, {
-             ...updates,
-             points: increment(pointAmount),
-             points_history: arrayUnion(newLogEntry)
-        });
+          await updateDoc(riderRef, {
+               ...updates,
+               points: increment(30),
+               points_history: arrayUnion(newLogEntry)
+          });
+        } else {
+          // Non-scoring period or cancel — still update retention timestamp
+          await updateDoc(riderRef, updates);
+        }
 
       } catch (e) {
         console.error("Failed to sync rider data", e);
@@ -255,7 +260,8 @@ export const busLogService = {
     const q = query(
       collection(db, 'bus_logs'),
       where('bus_route', '==', busRoute),
-      orderBy('date', 'desc')
+      orderBy('date', 'desc'),
+      firestoreLimit(limit)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) as BusLog[];

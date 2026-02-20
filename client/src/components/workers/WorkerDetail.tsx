@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -7,7 +7,6 @@ import {
   Trash2,
   Phone,
   Mail,
-  Check,
   Calendar,
   Briefcase,
   Clock,
@@ -31,7 +30,7 @@ const WorkerDetail: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const loadWorker = async () => {
+  const loadWorker = useCallback(async () => {
     if (!id) return;
     try {
       const data = await workerService.getWorker(id);
@@ -41,27 +40,22 @@ const WorkerDetail: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     loadWorker();
   }, [loadWorker]);
 
-  const isPresentToday = worker
-    ? (worker.attendance_log || []).some((a) => a.date === today)
-    : false;
-
-  const handleToggle = async () => {
-    if (!id) return;
-    await workerService.logAttendance(id);
-    await loadWorker();
-  };
 
   const handleDelete = async () => {
     if (!worker || !id) return;
     if (!window.confirm(`Delete ${worker.name}?`)) return;
-    await workerService.deleteWorker(id);
-    navigate(-1);
+    try {
+      await workerService.deleteWorker(id);
+      navigate(-1);
+    } catch (err: any) {
+      alert('Failed to delete: ' + err.message);
+    }
   };
 
   if (loading) return <Loading />;
@@ -97,14 +91,6 @@ const WorkerDetail: React.FC = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <Button
-            onClick={handleToggle}
-            className={`w-full ${isPresentToday ? 'bg-green-500 hover:bg-green-600' : 'bg-gradient-to-r from-primary to-purple-600'} text-white`}
-          >
-            <Check className="w-4 h-4 mr-2" />
-            {isPresentToday ? '✅ Present Today — Tap to Undo' : 'Mark Present Today'}
-          </Button>
-
           <div className="space-y-3 pt-2">
             {worker.phone && (
               <div className="flex items-center gap-3">

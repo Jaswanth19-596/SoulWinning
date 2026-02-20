@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type SectionType = 'prospects' | 'riders' | 'workers' | 'satvisit' | 'buslog';
+type SectionType = 'prospects' | 'riders' | 'workers' | 'satvisit' | 'buslog' | 'leaderboard' | 'prayer';
 
 interface AppContextType {
   section: SectionType;

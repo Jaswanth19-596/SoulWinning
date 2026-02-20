@@ -3,11 +3,13 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { Users, Heart, Droplets, TrendingUp } from 'lucide-react';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
+import { useAuth } from '../../contexts/AuthContext';
 import Loading from '../shared/Loading';
 
 const AnalyticsDashboard: React.FC = () => {
+  const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
      totalRiders: 0,
@@ -18,11 +20,24 @@ const AnalyticsDashboard: React.FC = () => {
   });
 
   useEffect(() => {
+    if (!session?.bus_route) return;
+    const busRoute = session.bus_route;
+
     const fetchData = async () => {
        try {
-          // 1. Get Totals & Spiritual Stats
-          const ridersSnap = await getDocs(collection(db, 'riders'));
-          const prospectsSnap = await getDocs(collection(db, 'prospects'));
+          // Filter by bus_route instead of fetching ALL documents globally
+          const ridersSnap = await getDocs(
+            query(
+              collection(db, 'riders'),
+              where('bus_route', '==', busRoute)
+            )
+          );
+          const prospectsSnap = await getDocs(
+            query(
+              collection(db, 'prospects'),
+              where('bus_route', '==', busRoute)
+            )
+          );
           
           let salvationsCount = 0;
           let baptismsCount = 0;
@@ -34,19 +49,18 @@ const AnalyticsDashboard: React.FC = () => {
              if (data.baptism_date && data.baptism_date.startsWith(currentYear.toString())) baptismsCount++;
           });
 
-          // 2. Get Attendance Trend (Last 8 weeks)
-          // We need 'bus_logs' collection. Assuming ID is date YYYY-MM-DD
-          // It's harder to query "last 8 entries" by ID string if not strictly ordered by timestamp field, 
-          // but let's assume we can fetch recent ones.
-          // Actually, our bus_logs don't have a timestamp field easy to sort by in the root, 
-          // but the ID is the date. We can just fetch all (if small) or try to range query.
-          // For MVP, let's just fetch all and take last 8.
-          // Better: limit query if possible, but IDs are dates.
-          const logsSnap = await getDocs(query(collection(db, 'bus_logs'))); 
+          // Fetch only last 8 bus logs for this route instead of ALL logs globally
+          const logsSnap = await getDocs(
+            query(
+              collection(db, 'bus_logs'),
+              where('bus_route', '==', busRoute),
+              orderBy('date', 'desc'),
+              limit(8)
+            )
+          );
           const logs = logsSnap.docs
              .map(d => ({ date: d.id, ...d.data() }))
-             .sort((a, b) => a.date.localeCompare(b.date))
-             .slice(-8); // Last 8 records
+             .sort((a, b) => a.date.localeCompare(b.date)); // Re-sort ascending for chart
 
           const chartData = logs.map((log: any) => ({
              date: log.date.slice(5), // MM-DD
@@ -73,7 +87,7 @@ const AnalyticsDashboard: React.FC = () => {
     };
     
     fetchData();
-  }, []);
+  }, [session?.bus_route]);
 
   if (loading) return <Loading />;
 

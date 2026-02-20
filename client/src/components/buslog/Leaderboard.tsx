@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Trophy, Star, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -7,11 +7,13 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ riders }) => {
-  // Sort by points desc, take top 5
-  const topRiders = [...riders]
-    .filter(r => (r.points || 0) > 0)
-    .sort((a, b) => (b.points || 0) - (a.points || 0))
-    .slice(0, 5);
+  const topRiders = useMemo(() => 
+    [...riders]
+      .filter(r => (r.points || 0) > 0)
+      .sort((a, b) => (b.points || 0) - (a.points || 0))
+      .slice(0, 5),
+    [riders]
+  );
 
   if (topRiders.length === 0) return null;
 
@@ -53,4 +55,4 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ riders }) => {
   );
 };
 
-export default Leaderboard;
+export default React.memo(Leaderboard);

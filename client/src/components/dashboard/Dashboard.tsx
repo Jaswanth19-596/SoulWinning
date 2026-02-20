@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users,
@@ -22,6 +22,11 @@ const Dashboard: React.FC = () => {
   const { session } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Cache fetched data to reuse for CSV export (avoids re-fetching)
+  const cachedData = useRef<{ prospects: any[]; riders: any[]; workers: any[] }>(
+    { prospects: [], riders: [], workers: [] }
+  );
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -36,6 +41,9 @@ const Dashboard: React.FC = () => {
           workerService.getWorkers(session.bus_route, 'sunday'),
         ]);
 
+        // Cache for export reuse
+        cachedData.current = { prospects, riders, workers };
+
         const visitedToday = riders.filter((r) =>
           (r.visit_history || []).some((v) => v.date === today)
         ).length;
@@ -49,7 +57,7 @@ const Dashboard: React.FC = () => {
           total_riders: riders.length,
           total_workers: workers.length,
           visited_today: visitedToday,
-          rode_today: visitedToday, // Same field, different label for Sunday
+          rode_today: visitedToday,
           workers_present: workersPresent,
         });
       } catch (err) {
@@ -62,30 +70,29 @@ const Dashboard: React.FC = () => {
     loadStats();
   }, [session, today]);
 
-  const handleExportCSV = async () => {
+  const handleExportCSV = useCallback(() => {
     if (!session) return;
-    try {
-      const [prospects, riders, workers] = await Promise.all([
-        prospectService.getProspects(session.bus_route, 'sunday'),
-        riderService.getRiders(session.bus_route, 'sunday'),
-        workerService.getWorkers(session.bus_route, 'sunday'),
-      ]);
+    const { prospects, riders, workers } = cachedData.current;
+    
+    if (prospects.length === 0 && riders.length === 0 && workers.length === 0) {
+      alert('No data to export. Please wait for data to load.');
+      return;
+    }
 
-      // Build CSV
+    try {
       let csv = 'Type,Name,Phone,Address,Status,Notes\n';
-      prospects.forEach((p) => {
+      prospects.forEach((p: any) => {
         const addr = [p.address.street, p.address.city, p.address.state, p.address.zip].filter(Boolean).join(' ');
-        csv += `Prospect,"${p.name}","${p.phone || ''}","${addr}","${p.interest_level}","${p.notes}"\n`;
+        csv += `Prospect,"${p.name}","${p.phone || ''}","${addr}","${p.interest_level}","${p.notes || ''}"\n`;
       });
-      riders.forEach((r) => {
+      riders.forEach((r: any) => {
         const addr = [r.address.street, r.address.city, r.address.state, r.address.zip].filter(Boolean).join(' ');
-        csv += `Rider,"${r.name}","${r.phone || ''}","${addr}","${r.status}","${r.notes}"\n`;
+        csv += `Rider,"${r.name}","${r.phone || ''}","${addr}","${r.status}","${r.notes || ''}"\n`;
       });
-      workers.forEach((w) => {
+      workers.forEach((w: any) => {
         csv += `Worker,"${w.name}","${w.phone || ''}","","${w.assigned_section}",""\n`;
       });
 
-      // Download
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -98,7 +105,7 @@ const Dashboard: React.FC = () => {
     } catch (err) {
       alert('Export failed');
     }
-  };
+  }, [session, today]);
 
   const statCards = [
     {

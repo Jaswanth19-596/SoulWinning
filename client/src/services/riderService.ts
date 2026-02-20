@@ -9,9 +9,10 @@ import {
   query,
   where,
   orderBy,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { Rider, CreateRiderData, DayType } from '../types';
+import { Rider, CreateRiderData, DayType, WeeklyNote } from '../types';
 
 export const riderService = {
   async getRiders(busRoute: string, dayType: DayType): Promise<Rider[]> {
@@ -57,15 +58,25 @@ export const riderService = {
   async updateRider(id: string, data: Partial<Rider>): Promise<void> {
     const { id: _, ...updateData } = data as any;
     
-    // Sanitize undefined values for Firestore
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
+    // Sanitize: recursively remove undefined values (Firestore rejects them)
+    const stripUndefined = (obj: any): any => {
+      if (obj === null || obj === undefined) return obj;
+      if (Array.isArray(obj)) return obj.map(stripUndefined);
+      if (typeof obj === 'object') {
+        const cleaned: any = {};
+        for (const [k, v] of Object.entries(obj)) {
+          if (v !== undefined) {
+            cleaned[k] = typeof v === 'object' && v !== null ? stripUndefined(v) : v;
+          }
+        }
+        return cleaned;
       }
-    });
+      return obj;
+    };
+    const cleanData = stripUndefined(updateData);
 
     await updateDoc(doc(db, 'riders', id), {
-      ...updateData,
+      ...cleanData,
       updated_at: new Date().toISOString(),
     });
   },
@@ -142,5 +153,31 @@ export const riderService = {
         r.phone?.toLowerCase().includes(term) ||
         r.address?.street?.toLowerCase().includes(term)
     );
+  },
+
+  async addNote(riderId: string, text: string): Promise<WeeklyNote> {
+    const note: WeeklyNote = {
+      id: crypto.randomUUID(),
+      text: text.trim(),
+      date: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString(),
+    };
+    await updateDoc(doc(db, 'riders', riderId), {
+      weekly_notes: arrayUnion(note),
+      updated_at: new Date().toISOString(),
+    });
+    return note;
+  },
+
+  async deleteNote(riderId: string, noteId: string): Promise<void> {
+    const ref = doc(db, 'riders', riderId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('Rider not found');
+    const data = snap.data();
+    const notes = (data.weekly_notes || []).filter((n: WeeklyNote) => n.id !== noteId);
+    await updateDoc(ref, {
+      weekly_notes: notes,
+      updated_at: new Date().toISOString(),
+    });
   },
 };
